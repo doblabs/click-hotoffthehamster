@@ -1744,6 +1744,10 @@ class Group(Command):
         """Extra format methods for multi methods that adds all the commands
         after the options.
         """
+        commands = self.format_commands_fetch(ctx)
+        self.format_commands_write(commands, formatter)
+
+    def format_commands_fetch(self, ctx):
         commands = []
         for subcommand in self.list_commands(ctx):
             cmd = self.get_command(ctx, subcommand)
@@ -1754,6 +1758,9 @@ class Group(Command):
                 continue
 
             commands.append((subcommand, cmd))
+        return commands
+
+    def format_commands_write(self, commands, formatter):
 
         # allow for 3 times the default spacing
         if len(commands):
