@@ -933,6 +933,12 @@ class Command:
         #: should show up in the help page and execute.  Eager parameters
         #: will automatically be handled before non eager ones.
         self.params: list[Parameter] = params or []
+        # LB: FIXME/2023-05-14: Confirm: Removed in Click v8:
+        #
+        #  # if a form feed (page break) is found in the help text, truncate help
+        #  # text to the content preceding the first form feed
+        #  if help and not callable(help) and "\f" in help:
+        #      help = help.split("\f", 1)[0]
         self.help = help
         self.epilog = epilog
         self.options_metavar = options_metavar
@@ -1087,6 +1093,21 @@ class Command:
 
             with formatter.indentation():
                 formatter.write_text(text)
+        # LB: FIXME/2023-05-14: Confirm: Removed in Click v8:
+        #  if self.help:
+        #      formatter.write_paragraph()
+        #      with formatter.indentation():
+        #          help_text = self.help
+        #          if callable(help_text):
+        #              help_text = help_text()
+        #              help_text = inspect.cleandoc(help_text)
+        #          if self.deprecated:
+        #              help_text += DEPRECATED_HELP_NOTICE
+        #          formatter.write_text(help_text)
+        #  elif self.deprecated:
+        #      formatter.write_paragraph()
+        #      with formatter.indentation():
+        #          formatter.write_text(DEPRECATED_HELP_NOTICE)
 
     def format_options(self, ctx: Context, formatter: HelpFormatter) -> None:
         """Writes all the options into the formatter if they exist."""

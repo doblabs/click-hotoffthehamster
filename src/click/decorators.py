@@ -97,6 +97,31 @@ def make_pass_decorator(
     return decorator  # type: ignore[return-value]
 
 
+# LB: FIXME/2023-05-14: Confirm: Removed in Click v8:
+#  def _make_command(f, name, attrs, cls):
+#      if isinstance(f, Command):
+#          raise TypeError("Attempted to convert a callback into a command twice.")
+#      try:
+#          params = f.__click_params__
+#          params.reverse()
+#          del f.__click_params__
+#      except AttributeError:
+#          params = []
+#      help = attrs.get("help")
+#      if help is None:
+#          help = inspect.getdoc(f)
+#          if isinstance(help, bytes):
+#              help = help.decode("utf-8")
+#      elif not callable(help):
+#          help = inspect.cleandoc(help)
+#      attrs["help"] = help
+#      _check_for_unicode_literals()
+#      return cls(
+#          name=name or f.__name__.lower().replace("_", "-"),
+#          callback=f,
+#          params=params,
+#          **attrs
+#      )
 def pass_meta_key(
     key: str, *, doc_description: str | None = None
 ) -> t.Callable[[t.Callable[te.Concatenate[T, P], R]], t.Callable[P, R]]:
