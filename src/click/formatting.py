@@ -212,6 +212,7 @@ class HelpFormatter:
         rows: cabc.Sequence[tuple[str, str]],
         col_max: int = 30,
         col_spacing: int = 2,
+        col_min: int = 1,
     ) -> None:
         """Writes a definition list into the buffer.  This is how options
         and commands are usually formatted.
@@ -220,13 +221,14 @@ class HelpFormatter:
         :param col_max: the maximum width of the first column.
         :param col_spacing: the number of spaces between the first and
                             second column.
+        :param col_min: the minimum width of the first column.
         """
         rows = list(rows)
         widths = measure_table(rows)
         if len(widths) != 2:
             raise TypeError("Expected two columns for definition list")
 
-        first_col = min(widths[0], col_max) + col_spacing
+        first_col = max(min(widths[0], col_max), col_min) + col_spacing
 
         for first, second in iter_rows(rows, len(widths)):
             self.write(f"{'':>{self.current_indent}}{first}")
