@@ -1090,6 +1090,18 @@ class Command:
         self.format_options(ctx, formatter)
         self.format_epilog(ctx, formatter)
 
+    @property
+    def help_header_options(self):
+        return _("Options")
+
+    @property
+    def help_header_commands(self):
+        return _("Commands")
+
+    @property
+    def help_header_epilog(self):
+        return ""
+
     def format_help_text(self, ctx: Context, formatter: HelpFormatter) -> None:
         """Writes the help text to the formatter if it exists."""
         if self.help is not None:
@@ -1131,7 +1143,7 @@ class Command:
                 opts.append(rv)
 
         if opts:
-            with formatter.section(_("Options")):
+            with formatter.section(self.help_header_options):
                 formatter.write_dl(opts)
 
     def format_epilog(self, ctx: Context, formatter: HelpFormatter) -> None:
@@ -1140,7 +1152,7 @@ class Command:
             epilog = inspect.cleandoc(self.epilog)
             formatter.write_paragraph()
 
-            with formatter.indentation():
+            with formatter.section(self.help_header_epilog):
                 formatter.write_text(epilog)
 
     def make_context(
@@ -1769,7 +1781,9 @@ class Group(Command):
             commands.append((subcommand, cmd))
         return commands
 
-    def format_commands_write(self, commands, formatter):
+    def format_commands_write(self, commands, formatter, section_header=None):
+        if section_header is None:
+            section_header = self.help_header_commands
 
         # allow for 3 times the default spacing
         if len(commands):
@@ -1781,7 +1795,7 @@ class Group(Command):
                 rows.append((subcommand, help))
 
             if rows:
-                with formatter.section(_("Commands")):
+                with formatter.section(section_header):
                     formatter.write_dl(rows)
 
     def parse_args(self, ctx: Context, args: list[str]) -> list[str]:
