@@ -1134,7 +1134,7 @@ class Command:
         #      with formatter.indentation():
         #          formatter.write_text(DEPRECATED_HELP_NOTICE)
 
-    def format_options(self, ctx: Context, formatter: HelpFormatter) -> None:
+    def format_options(self, ctx: Context, formatter: HelpFormatter, **kwargs) -> None:
         """Writes all the options into the formatter if they exist."""
         opts = []
         for param in self.get_params(ctx):
@@ -1144,7 +1144,7 @@ class Command:
 
         if opts:
             with formatter.section(self.help_header_options):
-                formatter.write_dl(opts)
+                formatter.write_dl(opts, **kwargs)
 
     def format_epilog(self, ctx: Context, formatter: HelpFormatter) -> None:
         """Writes the epilog into the formatter if it exists."""
@@ -1781,7 +1781,7 @@ class Group(Command):
             commands.append((subcommand, cmd))
         return commands
 
-    def format_commands_write(self, commands, formatter, section_header=None):
+    def format_commands_write(self, commands, formatter, section_header=None, **kwargs):
         if section_header is None:
             section_header = self.help_header_commands
 
@@ -1796,7 +1796,7 @@ class Group(Command):
 
             if rows:
                 with formatter.section(section_header):
-                    formatter.write_dl(rows)
+                    formatter.write_dl(rows, **kwargs)
 
     def parse_args(self, ctx: Context, args: list[str]) -> list[str]:
         if not args and self.no_args_is_help and not ctx.resilient_parsing:
