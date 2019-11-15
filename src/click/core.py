@@ -226,6 +226,10 @@ class Context:
         value is not set, it defaults to the value from the parent
         context. ``Command.show_default`` overrides this default for the
         specific command.
+    :param help_option_fallthrough: if True, do not process --help on root
+                                    command before calling invoke (so that
+                                    other options, like --color, can be used
+                                    in concert with --help).
 
     .. versionchanged:: 8.2
         The ``protected_args`` attribute is deprecated and will be removed in
@@ -254,6 +258,7 @@ class Context:
         Added the ``resilient_parsing``, ``help_option_names``, and
         ``token_normalize_func`` parameters.
     """
+# LB: FIXME/2023-05-14: Confirm: help_option_fallthrough
 
     #: The formatter class to create with :meth:`make_formatter`.
     #:
@@ -278,6 +283,8 @@ class Context:
         token_normalize_func: t.Callable[[str], str] | None = None,
         color: bool | None = None,
         show_default: bool | None = None,
+        # LB: FIXME/2023-05-14: Confirm: help_option_fallthrough
+        help_option_fallthrough=False,
     ) -> None:
         #: the parent context or `None` if none exists.
         self.parent = parent
@@ -424,6 +431,9 @@ class Context:
 
         #: Show option default values when formatting help text.
         self.show_default: bool | None = show_default
+
+        self.help_option_fallthrough = help_option_fallthrough
+        self.help_option_spotted = False
 
         self._close_callbacks: list[t.Callable[[], t.Any]] = []
         self._depth = 0
@@ -1010,6 +1020,9 @@ class Command:
 
         def show_help(ctx: Context, param: Parameter, value: str) -> None:
             if value and not ctx.resilient_parsing:
+                if ctx.find_root().help_option_fallthrough:
+                    ctx.find_root().help_option_spotted = True
+                    return
                 echo(ctx.get_help(), color=ctx.color)
                 ctx.exit()
 
