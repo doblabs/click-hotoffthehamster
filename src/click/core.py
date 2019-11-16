@@ -975,9 +975,9 @@ class Command:
         self.format_usage(ctx, formatter)
         return formatter.getvalue().rstrip("\n")
 
-    def get_params(self, ctx: Context) -> list[Parameter]:
+    def get_params(self, ctx: Context, include_parent_params: bool = False) -> list[Parameter]:
         rv = self.params
-        help_option = self.get_help_option(ctx)
+        help_option = self.get_help_option(ctx, include_parent_params)
 
         if help_option is not None:
             rv = [*rv, help_option]
@@ -1011,7 +1011,7 @@ class Command:
             all_names.difference_update(param.secondary_opts)
         return list(all_names)
 
-    def get_help_option(self, ctx: Context) -> Option | None:
+    def get_help_option(self, ctx: Context, include_parent_params: bool = False) -> Option | None:
         """Returns the help option object."""
         help_options = self.get_help_option_names(ctx)
 
@@ -1032,6 +1032,7 @@ class Command:
             is_eager=True,
             expose_value=False,
             callback=show_help,
+            hidden=not include_parent_params and ctx.parent is not None,
             help=_("Show this message and exit."),
         )
 
@@ -1239,7 +1240,7 @@ class Command:
         results: list[CompletionItem] = []
 
         if incomplete and not incomplete[0].isalnum():
-            for param in self.get_params(ctx):
+            for param in self.get_params(ctx, include_parent_params=True):
                 if (
                     not isinstance(param, Option)
                     or param.hidden
