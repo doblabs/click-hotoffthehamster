@@ -614,7 +614,7 @@ def _resolve_incomplete(
     if "--" not in args and _start_of_option(ctx, incomplete):
         return ctx.command, incomplete
 
-    params = ctx.command.get_params(ctx)
+    params = ctx.command.get_params(ctx, include_parent_params=True)
 
     # If the last complete arg is an option name with an incomplete
     # value, the option will provide value completions.
