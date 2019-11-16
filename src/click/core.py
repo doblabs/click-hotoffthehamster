@@ -1057,6 +1057,8 @@ class Command:
         """
         if self.short_help:
             text = inspect.cleandoc(self.short_help)
+        elif callable(self.help):
+            text = self.help(ctx)
         elif self.help:
             help_text = self.get_user_help_text(ctx)
             text = make_default_short_help(help_text, limit)
@@ -1757,7 +1759,7 @@ class Group(Command):
         after the options.
         """
         commands = self.format_commands_fetch(ctx)
-        self.format_commands_write(commands, formatter)
+        self.format_commands_write(commands, ctx, formatter)
 
     def format_commands_fetch(self, ctx):
         commands = []
@@ -1772,7 +1774,9 @@ class Group(Command):
             commands.append((subcommand, cmd))
         return commands
 
-    def format_commands_write(self, commands, formatter, section_header=None, **kwargs):
+    def format_commands_write(
+        self, commands, ctx, formatter, section_header=None, **kwargs
+    ):
         if section_header is None:
             section_header = self.help_header_commands
 
@@ -1782,7 +1786,7 @@ class Group(Command):
 
             rows = []
             for subcommand, cmd in commands:
-                help = cmd.get_short_help_str(ctx, limit)
+                help = cmd.get_short_help_str(ctx=ctx, limit=limit)
                 rows.append((subcommand, help))
 
             if rows:
