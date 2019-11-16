@@ -1057,12 +1057,14 @@ class Command:
         self.format_help(ctx, formatter)
         return formatter.getvalue().rstrip("\n")
 
-    def get_short_help_str(self, limit: int = 45) -> str:
+    def get_short_help_str(self, ctx: Context, limit: int = 45) -> str:
         """Gets short help for the command or makes it by shortening the
         long help string.
         """
         if self.short_help:
             text = inspect.cleandoc(self.short_help)
+        elif callable(self.help):
+            text = self.help(ctx)
         elif self.help:
             text = make_default_short_help(self.help, limit)
         else:
@@ -1269,7 +1271,7 @@ class Command:
 
             if isinstance(ctx.command, Group) and ctx.command.chain:
                 results.extend(
-                    CompletionItem(name, help=command.get_short_help_str())
+                    CompletionItem(name, help=command.get_short_help_str(ctx))
                     for name, command in _complete_visible_commands(ctx, incomplete)
                     if name not in ctx._protected_args
                 )
@@ -1766,7 +1768,7 @@ class Group(Command):
         after the options.
         """
         commands = self.format_commands_fetch(ctx)
-        self.format_commands_write(commands, formatter)
+        self.format_commands_write(commands, ctx, formatter)
 
     def format_commands_fetch(self, ctx):
         commands = []
@@ -1781,7 +1783,9 @@ class Group(Command):
             commands.append((subcommand, cmd))
         return commands
 
-    def format_commands_write(self, commands, formatter, section_header=None, **kwargs):
+    def format_commands_write(
+        self, commands, ctx, formatter, section_header=None, **kwargs
+    ):
         if section_header is None:
             section_header = self.help_header_commands
 
@@ -1791,7 +1795,7 @@ class Group(Command):
 
             rows = []
             for subcommand, cmd in commands:
-                help = cmd.get_short_help_str(limit)
+                help = cmd.get_short_help_str(ctx=ctx, limit=limit)
                 rows.append((subcommand, help))
 
             if rows:
@@ -1921,7 +1925,7 @@ class Group(Command):
         from click.shell_completion import CompletionItem
 
         results = [
-            CompletionItem(name, help=command.get_short_help_str())
+            CompletionItem(name, help=command.get_short_help_str(ctx))
             for name, command in _complete_visible_commands(ctx, incomplete)
         ]
         results.extend(super().shell_complete(ctx, incomplete))
