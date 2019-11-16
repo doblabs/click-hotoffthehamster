@@ -1756,7 +1756,9 @@ class Group(Command):
 
     def collect_usage_pieces(self, ctx: Context) -> list[str]:
         rv = super().collect_usage_pieces(ctx)
-        rv.append(self.subcommand_metavar)
+        # LB: FIXME/2023-05-14: Verify this if nec.: *UX: Help: Avoid double-spaces in generated usage string*
+        if self.subcommand_metavar:
+            rv.append(self.subcommand_metavar)
         return rv
 
     def format_options(self, ctx: Context, formatter: HelpFormatter) -> None:
