@@ -17,6 +17,7 @@ from ._compat import binary_streams
 from ._compat import open_stream
 from ._compat import should_strip_ansi
 from ._compat import strip_ansi
+from ._compat import term_len
 from ._compat import text_streams
 from ._compat import WIN
 from .globals import resolve_color_default
@@ -78,7 +79,7 @@ def make_default_short_help(help: str, max_length: int = 45) -> str:
     last_index = len(words) - 1
 
     for i, word in enumerate(words):
-        total_length += len(word) + (i > 0)
+        total_length += term_len(word) + (i > 0)
 
         if total_length > max_length:  # too long, truncate
             break
@@ -96,7 +97,7 @@ def make_default_short_help(help: str, max_length: int = 45) -> str:
 
     # remove words until the length is short enough
     while i > 0:
-        total_length -= len(words[i]) + (i > 0)
+        total_length -= term_len(words[i]) + (i > 0)
 
         if total_length <= max_length:
             break
