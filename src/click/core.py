@@ -2341,7 +2341,15 @@ class Parameter:
     def process_value(self, ctx: Context, value: t.Any) -> t.Any:
         value = self.type_cast_value(ctx, value)
 
-        if self.required and self.value_is_missing(value):
+        if (
+            self.required
+            and self.value_is_missing(value)
+            and (
+                not ctx.find_root().help_option_fallthrough
+                or not ctx.find_root().help_option_spotted
+            )
+            and (ctx.find_root().invoked_subcommand != "help")
+        ):
             raise MissingParameter(ctx=ctx, param=self)
 
         if self.callback is not None:
