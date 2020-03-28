@@ -310,7 +310,9 @@ def test_group_add_command_name(runner):
 
 def test_unprocessed_options(runner):
     @click_hotoffthehamster.command(context_settings=dict(ignore_unknown_options=True))
-    @click_hotoffthehamster.argument("args", nargs=-1, type=click_hotoffthehamster.UNPROCESSED)
+    @click_hotoffthehamster.argument(
+        "args", nargs=-1, type=click_hotoffthehamster.UNPROCESSED
+    )
     @click_hotoffthehamster.option("--verbose", "-v", count=True)
     def cli(verbose, args):
         click_hotoffthehamster.echo(f"Verbosity: {verbose}")
