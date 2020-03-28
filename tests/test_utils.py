@@ -358,7 +358,9 @@ def test_open_file_respects_ignore(runner):
         with open("test.txt", "w") as f:
             f.write("Hello world!")
 
-        with click_hotoffthehamster.open_file("test.txt", encoding="utf8", errors="ignore") as f:
+        with click_hotoffthehamster.open_file(
+            "test.txt", encoding="utf8", errors="ignore"
+        ) as f:
             assert f.errors == "ignore"
 
 
@@ -367,7 +369,9 @@ def test_open_file_ignore_invalid_utf8(runner):
         with open("test.txt", "wb") as f:
             f.write(b"\xe2\x28\xa1")
 
-        with click_hotoffthehamster.open_file("test.txt", encoding="utf8", errors="ignore") as f:
+        with click_hotoffthehamster.open_file(
+            "test.txt", encoding="utf8", errors="ignore"
+        ) as f:
             f.read()
 
 
@@ -423,7 +427,9 @@ def test_iter_keepopenfile(tmpdir):
     p = tmpdir.mkdir("testdir").join("testfile")
     p.write("\n".join(expected))
     with p.open() as f:
-        for e_line, a_line in zip(expected, click_hotoffthehamster.utils.KeepOpenFile(f)):
+        for e_line, a_line in zip(
+            expected, click_hotoffthehamster.utils.KeepOpenFile(f)
+        ):
             assert e_line == a_line.strip()
 
 
