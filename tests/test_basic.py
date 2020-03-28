@@ -165,7 +165,9 @@ def test_int_option(runner, args, expect):
 def test_uuid_option(runner, args, expect):
     @click_hotoffthehamster.command()
     @click_hotoffthehamster.option(
-        "--u", default="ba122011-349f-423b-873b-9d6a79c688ab", type=click_hotoffthehamster.UUID
+        "--u",
+        default="ba122011-349f-423b-873b-9d6a79c688ab",
+        type=click_hotoffthehamster.UUID,
     )
     def cli(u):
         click_hotoffthehamster.echo(f"U:[{u}]")
@@ -304,7 +306,9 @@ def test_file_lazy_mode(runner):
         assert result_out.exception
 
     @click_hotoffthehamster.command()
-    @click_hotoffthehamster.option("--file", type=click_hotoffthehamster.File("w", lazy=False))
+    @click_hotoffthehamster.option(
+        "--file", type=click_hotoffthehamster.File("w", lazy=False)
+    )
     def input_non_lazy(file):
         file.write("Hello World!\n")
 
@@ -317,7 +321,10 @@ def test_file_lazy_mode(runner):
 
 def test_path_option(runner):
     @click_hotoffthehamster.command()
-    @click_hotoffthehamster.option("-O", type=click_hotoffthehamster.Path(file_okay=False, exists=True, writable=True))
+    @click_hotoffthehamster.option(
+        "-O",
+        type=click_hotoffthehamster.Path(file_okay=False, exists=True, writable=True),
+    )
     def write_to_dir(o):
         with open(os.path.join(o, "foo.txt"), "wb") as f:
             f.write(b"meh\n")
@@ -363,7 +370,9 @@ def test_path_option(runner):
 
 def test_choice_option(runner):
     @click_hotoffthehamster.command()
-    @click_hotoffthehamster.option("--method", type=click_hotoffthehamster.Choice(["foo", "bar", "baz"]))
+    @click_hotoffthehamster.option(
+        "--method", type=click_hotoffthehamster.Choice(["foo", "bar", "baz"])
+    )
     def cli(method):
         click_hotoffthehamster.echo(method)
 
@@ -405,7 +414,9 @@ def test_choice_argument(runner):
 
 def test_datetime_option_default(runner):
     @click_hotoffthehamster.command()
-    @click_hotoffthehamster.option("--start_date", type=click_hotoffthehamster.DateTime())
+    @click_hotoffthehamster.option(
+        "--start_date", type=click_hotoffthehamster.DateTime()
+    )
     def cli(start_date):
         click_hotoffthehamster.echo(start_date.strftime("%Y-%m-%dT%H:%M:%S"))
 
@@ -432,7 +443,9 @@ def test_datetime_option_default(runner):
 
 def test_datetime_option_custom(runner):
     @click_hotoffthehamster.command()
-    @click_hotoffthehamster.option("--start_date", type=click_hotoffthehamster.DateTime(formats=["%A %B %d, %Y"]))
+    @click_hotoffthehamster.option(
+        "--start_date", type=click_hotoffthehamster.DateTime(formats=["%A %B %d, %Y"])
+    )
     def cli(start_date):
         click_hotoffthehamster.echo(start_date.strftime("%Y-%m-%dT%H:%M:%S"))
 
@@ -460,13 +473,27 @@ def test_evaluation_order(runner):
         return value
 
     @click_hotoffthehamster.command()
-    @click_hotoffthehamster.option("--missing", default="missing", is_eager=False, callback=memo)
-    @click_hotoffthehamster.option("--eager-flag1", flag_value="eager1", is_eager=True, callback=memo)
-    @click_hotoffthehamster.option("--eager-flag2", flag_value="eager2", is_eager=True, callback=memo)
-    @click_hotoffthehamster.option("--eager-flag3", flag_value="eager3", is_eager=True, callback=memo)
-    @click_hotoffthehamster.option("--normal-flag1", flag_value="normal1", is_eager=False, callback=memo)
-    @click_hotoffthehamster.option("--normal-flag2", flag_value="normal2", is_eager=False, callback=memo)
-    @click_hotoffthehamster.option("--normal-flag3", flag_value="normal3", is_eager=False, callback=memo)
+    @click_hotoffthehamster.option(
+        "--missing", default="missing", is_eager=False, callback=memo
+    )
+    @click_hotoffthehamster.option(
+        "--eager-flag1", flag_value="eager1", is_eager=True, callback=memo
+    )
+    @click_hotoffthehamster.option(
+        "--eager-flag2", flag_value="eager2", is_eager=True, callback=memo
+    )
+    @click_hotoffthehamster.option(
+        "--eager-flag3", flag_value="eager3", is_eager=True, callback=memo
+    )
+    @click_hotoffthehamster.option(
+        "--normal-flag1", flag_value="normal1", is_eager=False, callback=memo
+    )
+    @click_hotoffthehamster.option(
+        "--normal-flag2", flag_value="normal2", is_eager=False, callback=memo
+    )
+    @click_hotoffthehamster.option(
+        "--normal-flag3", flag_value="normal3", is_eager=False, callback=memo
+    )
     def cli(**x):
         pass
 

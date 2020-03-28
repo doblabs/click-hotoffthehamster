@@ -137,7 +137,9 @@ def test_path_allow_dash(runner):
 
 def test_file_atomics(runner):
     @click_hotoffthehamster.command()
-    @click_hotoffthehamster.argument("output", type=click_hotoffthehamster.File("wb", atomic=True))
+    @click_hotoffthehamster.argument(
+        "output", type=click_hotoffthehamster.File("wb", atomic=True)
+    )
     def inout(output):
         output.write(b"Foo bar baz\n")
         output.flush()
@@ -157,7 +159,9 @@ def test_file_atomics(runner):
 
 def test_stdout_default(runner):
     @click_hotoffthehamster.command()
-    @click_hotoffthehamster.argument("output", type=click_hotoffthehamster.File("w"), default="-")
+    @click_hotoffthehamster.argument(
+        "output", type=click_hotoffthehamster.File("w"), default="-"
+    )
     def inout(output):
         output.write("Foo bar baz\n")
         output.flush()

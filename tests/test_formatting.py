@@ -175,7 +175,9 @@ def test_formatting_usage_error_metavar_missing_arg(runner):
 
 def test_formatting_usage_error_metavar_bad_arg(runner):
     @click_hotoffthehamster.command()
-    @click_hotoffthehamster.argument("arg", type=click_hotoffthehamster.INT, metavar="metavar")
+    @click_hotoffthehamster.argument(
+        "arg", type=click_hotoffthehamster.INT, metavar="metavar"
+    )
     def cmd(arg):
         pass
 
@@ -331,7 +333,9 @@ def test_removing_multiline_marker(runner):
 
 def test_global_show_default(runner):
     @click_hotoffthehamster.command(context_settings=dict(show_default=True))
-    @click_hotoffthehamster.option("-f", "in_file", default="out.txt", help="Output file name")
+    @click_hotoffthehamster.option(
+        "-f", "in_file", default="out.txt", help="Output file name"
+    )
     def cli():
         pass
 
