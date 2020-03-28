@@ -1,16 +1,16 @@
 import pytest
 
-import click.shell_completion
-from click.core import Argument
-from click.core import Command
-from click.core import Group
-from click.core import Option
-from click.shell_completion import add_completion_class
-from click.shell_completion import CompletionItem
-from click.shell_completion import ShellComplete
-from click.types import Choice
-from click.types import File
-from click.types import Path
+import click_hotoffthehamster.shell_completion
+from click_hotoffthehamster.core import Argument
+from click_hotoffthehamster.core import Command
+from click_hotoffthehamster.core import Group
+from click_hotoffthehamster.core import Option
+from click_hotoffthehamster.shell_completion import add_completion_class
+from click_hotoffthehamster.shell_completion import CompletionItem
+from click_hotoffthehamster.shell_completion import ShellComplete
+from click_hotoffthehamster.types import Choice
+from click_hotoffthehamster.types import File
+from click_hotoffthehamster.types import Path
 
 
 def _get_completions(cli, args, incomplete):
@@ -291,7 +291,7 @@ def test_completion_item_data():
 @pytest.fixture()
 def _patch_for_completion(monkeypatch):
     monkeypatch.setattr(
-        "click.shell_completion.BashComplete._check_version", lambda self: True
+        "click_hotoffthehamster.shell_completion.BashComplete._check_version", lambda self: True
     )
 
 
@@ -348,38 +348,38 @@ def test_choice_case_sensitive(value, expect):
 
 @pytest.fixture()
 def _restore_available_shells(tmpdir):
-    prev_available_shells = click.shell_completion._available_shells.copy()
-    click.shell_completion._available_shells.clear()
+    prev_available_shells = click_hotoffthehamster.shell_completion._available_shells.copy()
+    click_hotoffthehamster.shell_completion._available_shells.clear()
     yield
-    click.shell_completion._available_shells.clear()
-    click.shell_completion._available_shells.update(prev_available_shells)
+    click_hotoffthehamster.shell_completion._available_shells.clear()
+    click_hotoffthehamster.shell_completion._available_shells.update(prev_available_shells)
 
 
 @pytest.mark.usefixtures("_restore_available_shells")
 def test_add_completion_class():
     # At first, "mysh" is not in available shells
-    assert "mysh" not in click.shell_completion._available_shells
+    assert "mysh" not in click_hotoffthehamster.shell_completion._available_shells
 
     class MyshComplete(ShellComplete):
         name = "mysh"
         source_template = "dummy source"
 
     # "mysh" still not in available shells because it is not registered
-    assert "mysh" not in click.shell_completion._available_shells
+    assert "mysh" not in click_hotoffthehamster.shell_completion._available_shells
 
     # Adding a completion class should return that class
     assert add_completion_class(MyshComplete) is MyshComplete
 
     # Now, "mysh" is finally in available shells
-    assert "mysh" in click.shell_completion._available_shells
-    assert click.shell_completion._available_shells["mysh"] is MyshComplete
+    assert "mysh" in click_hotoffthehamster.shell_completion._available_shells
+    assert click_hotoffthehamster.shell_completion._available_shells["mysh"] is MyshComplete
 
 
 @pytest.mark.usefixtures("_restore_available_shells")
 def test_add_completion_class_with_name():
     # At first, "mysh" is not in available shells
-    assert "mysh" not in click.shell_completion._available_shells
-    assert "not_mysh" not in click.shell_completion._available_shells
+    assert "mysh" not in click_hotoffthehamster.shell_completion._available_shells
+    assert "not_mysh" not in click_hotoffthehamster.shell_completion._available_shells
 
     class MyshComplete(ShellComplete):
         name = "not_mysh"
@@ -387,8 +387,8 @@ def test_add_completion_class_with_name():
 
     # "mysh" and "not_mysh" are still not in available shells because
     # it is not registered yet
-    assert "mysh" not in click.shell_completion._available_shells
-    assert "not_mysh" not in click.shell_completion._available_shells
+    assert "mysh" not in click_hotoffthehamster.shell_completion._available_shells
+    assert "not_mysh" not in click_hotoffthehamster.shell_completion._available_shells
 
     # Adding a completion class should return that class.
     # Because we are using the "name" parameter, the name isn't taken
@@ -396,15 +396,15 @@ def test_add_completion_class_with_name():
     assert add_completion_class(MyshComplete, name="mysh") is MyshComplete
 
     # Now, "mysh" is finally in available shells
-    assert "mysh" in click.shell_completion._available_shells
-    assert "not_mysh" not in click.shell_completion._available_shells
-    assert click.shell_completion._available_shells["mysh"] is MyshComplete
+    assert "mysh" in click_hotoffthehamster.shell_completion._available_shells
+    assert "not_mysh" not in click_hotoffthehamster.shell_completion._available_shells
+    assert click_hotoffthehamster.shell_completion._available_shells["mysh"] is MyshComplete
 
 
 @pytest.mark.usefixtures("_restore_available_shells")
 def test_add_completion_class_decorator():
     # At first, "mysh" is not in available shells
-    assert "mysh" not in click.shell_completion._available_shells
+    assert "mysh" not in click_hotoffthehamster.shell_completion._available_shells
 
     @add_completion_class
     class MyshComplete(ShellComplete):
@@ -412,5 +412,5 @@ def test_add_completion_class_decorator():
         source_template = "dummy source"
 
     # Using `add_completion_class` as a decorator adds the new shell immediately
-    assert "mysh" in click.shell_completion._available_shells
-    assert click.shell_completion._available_shells["mysh"] is MyshComplete
+    assert "mysh" in click_hotoffthehamster.shell_completion._available_shells
+    assert click_hotoffthehamster.shell_completion._available_shells["mysh"] is MyshComplete

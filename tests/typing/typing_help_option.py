@@ -1,13 +1,13 @@
 from typing_extensions import assert_type
 
-import click
+import click_hotoffthehamster
 
 
-@click.command()
-@click.help_option("-h", "--help")
+@click_hotoffthehamster.command()
+@click_hotoffthehamster.help_option("-h", "--help")
 def hello() -> None:
     """Simple program that greets NAME for a total of COUNT times."""
-    click.echo("Hello!")
+    click_hotoffthehamster.echo("Hello!")
 
 
-assert_type(hello, click.Command)
+assert_type(hello, click_hotoffthehamster.Command)

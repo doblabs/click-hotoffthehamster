@@ -1,12 +1,12 @@
-import click
+import click_hotoffthehamster
 
 
 def test_basic_defaults(runner):
-    @click.command()
-    @click.option("--foo", default=42, type=click.FLOAT)
+    @click_hotoffthehamster.command()
+    @click_hotoffthehamster.option("--foo", default=42, type=click_hotoffthehamster.FLOAT)
     def cli(foo):
         assert type(foo) is float
-        click.echo(f"FOO:[{foo}]")
+        click_hotoffthehamster.echo(f"FOO:[{foo}]")
 
     result = runner.invoke(cli, [])
     assert not result.exception
@@ -14,12 +14,12 @@ def test_basic_defaults(runner):
 
 
 def test_multiple_defaults(runner):
-    @click.command()
-    @click.option("--foo", default=[23, 42], type=click.FLOAT, multiple=True)
+    @click_hotoffthehamster.command()
+    @click_hotoffthehamster.option("--foo", default=[23, 42], type=click_hotoffthehamster.FLOAT, multiple=True)
     def cli(foo):
         for item in foo:
             assert type(item) is float
-            click.echo(item)
+            click_hotoffthehamster.echo(item)
 
     result = runner.invoke(cli, [])
     assert not result.exception
@@ -27,13 +27,13 @@ def test_multiple_defaults(runner):
 
 
 def test_nargs_plus_multiple(runner):
-    @click.command()
-    @click.option(
-        "--arg", default=((1, 2), (3, 4)), nargs=2, multiple=True, type=click.INT
+    @click_hotoffthehamster.command()
+    @click_hotoffthehamster.option(
+        "--arg", default=((1, 2), (3, 4)), nargs=2, multiple=True, type=click_hotoffthehamster.INT
     )
     def cli(arg):
         for a, b in arg:
-            click.echo(f"<{a:d}|{b:d}>")
+            click_hotoffthehamster.echo(f"<{a:d}|{b:d}>")
 
     result = runner.invoke(cli, [])
     assert not result.exception
@@ -43,14 +43,14 @@ def test_nargs_plus_multiple(runner):
 def test_multiple_flag_default(runner):
     """Default default for flags when multiple=True should be empty tuple."""
 
-    @click.command
+    @click_hotoffthehamster.command
     # flag due to secondary token
-    @click.option("-y/-n", multiple=True)
+    @click_hotoffthehamster.option("-y/-n", multiple=True)
     # flag due to is_flag
-    @click.option("-f", is_flag=True, multiple=True)
+    @click_hotoffthehamster.option("-f", is_flag=True, multiple=True)
     # flag due to flag_value
-    @click.option("-v", "v", flag_value=1, multiple=True)
-    @click.option("-q", "v", flag_value=-1, multiple=True)
+    @click_hotoffthehamster.option("-v", "v", flag_value=1, multiple=True)
+    @click_hotoffthehamster.option("-q", "v", flag_value=-1, multiple=True)
     def cli(y, f, v):
         return y, f, v
 

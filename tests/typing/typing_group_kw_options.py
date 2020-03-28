@@ -1,11 +1,11 @@
 from typing_extensions import assert_type
 
-import click
+import click_hotoffthehamster
 
 
-@click.group(context_settings={})
+@click_hotoffthehamster.group(context_settings={})
 def hello() -> None:
     pass
 
 
-assert_type(hello, click.Group)
+assert_type(hello, click_hotoffthehamster.Group)
