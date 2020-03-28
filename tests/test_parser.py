@@ -1,8 +1,8 @@
 import pytest
 
-import click
-from click.parser import _OptionParser
-from click.shell_completion import split_arg_string
+import click_hotoffthehamster
+from click_hotoffthehamster.parser import _OptionParser
+from click_hotoffthehamster.shell_completion import split_arg_string
 
 
 @pytest.mark.parametrize(
@@ -25,8 +25,8 @@ def test_parser_default_prefixes():
 
 
 def test_parser_collects_prefixes():
-    ctx = click.Context(click.Command("test"))
+    ctx = click_hotoffthehamster.Context(click_hotoffthehamster.Command("test"))
     parser = _OptionParser(ctx)
-    click.Option("+p", is_flag=True).add_to_parser(parser, ctx)
-    click.Option("!e", is_flag=True).add_to_parser(parser, ctx)
+    click_hotoffthehamster.Option("+p", is_flag=True).add_to_parser(parser, ctx)
+    click_hotoffthehamster.Option("!e", is_flag=True).add_to_parser(parser, ctx)
     assert parser._opt_prefixes == {"-", "--", "+", "!"}

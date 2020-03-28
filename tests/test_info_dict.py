@@ -1,11 +1,11 @@
 import pytest
 
-import click.types
+import click_hotoffthehamster.types
 
 # Common (obj, expect) pairs used to construct multiple tests.
-STRING_PARAM_TYPE = (click.STRING, {"param_type": "String", "name": "text"})
-INT_PARAM_TYPE = (click.INT, {"param_type": "Int", "name": "integer"})
-BOOL_PARAM_TYPE = (click.BOOL, {"param_type": "Bool", "name": "boolean"})
+STRING_PARAM_TYPE = (click_hotoffthehamster.STRING, {"param_type": "String", "name": "text"})
+INT_PARAM_TYPE = (click_hotoffthehamster.INT, {"param_type": "Int", "name": "integer"})
+BOOL_PARAM_TYPE = (click_hotoffthehamster.BOOL, {"param_type": "Bool", "name": "boolean"})
 HELP_OPTION = (
     None,
     {
@@ -28,7 +28,7 @@ HELP_OPTION = (
     },
 )
 NAME_ARGUMENT = (
-    click.Argument(["name"]),
+    click_hotoffthehamster.Argument(["name"]),
     {
         "name": "name",
         "param_type_name": "argument",
@@ -43,7 +43,7 @@ NAME_ARGUMENT = (
     },
 )
 NUMBER_OPTION = (
-    click.Option(["-c", "--count", "number"], default=1),
+    click_hotoffthehamster.Option(["-c", "--count", "number"], default=1),
     {
         "name": "number",
         "param_type_name": "option",
@@ -64,7 +64,7 @@ NUMBER_OPTION = (
     },
 )
 HELLO_COMMAND = (
-    click.Command("hello", params=[NUMBER_OPTION[0]]),
+    click_hotoffthehamster.Command("hello", params=[NUMBER_OPTION[0]]),
     {
         "name": "hello",
         "params": [NUMBER_OPTION[1], HELP_OPTION[1]],
@@ -76,7 +76,7 @@ HELLO_COMMAND = (
     },
 )
 HELLO_GROUP = (
-    click.Group("cli", [HELLO_COMMAND[0]]),
+    click_hotoffthehamster.Group("cli", [HELLO_COMMAND[0]]),
     {
         "name": "cli",
         "params": [HELP_OPTION[1]],
@@ -95,18 +95,18 @@ HELLO_GROUP = (
     ("obj", "expect"),
     [
         pytest.param(
-            click.types.FuncParamType(range),
+            click_hotoffthehamster.types.FuncParamType(range),
             {"param_type": "Func", "name": "range", "func": range},
             id="Func ParamType",
         ),
         pytest.param(
-            click.UNPROCESSED,
+            click_hotoffthehamster.UNPROCESSED,
             {"param_type": "Unprocessed", "name": "text"},
             id="UNPROCESSED ParamType",
         ),
         pytest.param(*STRING_PARAM_TYPE, id="STRING ParamType"),
         pytest.param(
-            click.Choice(["a", "b"]),
+            click_hotoffthehamster.Choice(["a", "b"]),
             {
                 "param_type": "Choice",
                 "name": "choice",
@@ -116,13 +116,13 @@ HELLO_GROUP = (
             id="Choice ParamType",
         ),
         pytest.param(
-            click.DateTime(["%Y-%m-%d"]),
+            click_hotoffthehamster.DateTime(["%Y-%m-%d"]),
             {"param_type": "DateTime", "name": "datetime", "formats": ["%Y-%m-%d"]},
             id="DateTime ParamType",
         ),
         pytest.param(*INT_PARAM_TYPE, id="INT ParamType"),
         pytest.param(
-            click.IntRange(0, 10, clamp=True),
+            click_hotoffthehamster.IntRange(0, 10, clamp=True),
             {
                 "param_type": "IntRange",
                 "name": "integer range",
@@ -135,10 +135,10 @@ HELLO_GROUP = (
             id="IntRange ParamType",
         ),
         pytest.param(
-            click.FLOAT, {"param_type": "Float", "name": "float"}, id="FLOAT ParamType"
+            click_hotoffthehamster.FLOAT, {"param_type": "Float", "name": "float"}, id="FLOAT ParamType"
         ),
         pytest.param(
-            click.FloatRange(-0.5, 0.5),
+            click_hotoffthehamster.FloatRange(-0.5, 0.5),
             {
                 "param_type": "FloatRange",
                 "name": "float range",
@@ -152,15 +152,15 @@ HELLO_GROUP = (
         ),
         pytest.param(*BOOL_PARAM_TYPE, id="Bool ParamType"),
         pytest.param(
-            click.UUID, {"param_type": "UUID", "name": "uuid"}, id="UUID ParamType"
+            click_hotoffthehamster.UUID, {"param_type": "UUID", "name": "uuid"}, id="UUID ParamType"
         ),
         pytest.param(
-            click.File(),
+            click_hotoffthehamster.File(),
             {"param_type": "File", "name": "filename", "mode": "r", "encoding": None},
             id="File ParamType",
         ),
         pytest.param(
-            click.Path(),
+            click_hotoffthehamster.Path(),
             {
                 "param_type": "Path",
                 "name": "path",
@@ -174,7 +174,7 @@ HELLO_GROUP = (
             id="Path ParamType",
         ),
         pytest.param(
-            click.Tuple((click.STRING, click.INT)),
+            click_hotoffthehamster.Tuple((click_hotoffthehamster.STRING, click_hotoffthehamster.INT)),
             {
                 "param_type": "Tuple",
                 "name": "<text integer>",
@@ -184,7 +184,7 @@ HELLO_GROUP = (
         ),
         pytest.param(*NUMBER_OPTION, id="Option"),
         pytest.param(
-            click.Option(["--cache/--no-cache", "-c/-u"]),
+            click_hotoffthehamster.Option(["--cache/--no-cache", "-c/-u"]),
             {
                 "name": "cache",
                 "param_type_name": "option",
@@ -219,9 +219,9 @@ def test_parameter(obj, expect):
         pytest.param(*HELLO_COMMAND, id="Command"),
         pytest.param(*HELLO_GROUP, id="Group"),
         pytest.param(
-            click.Group(
+            click_hotoffthehamster.Group(
                 "base",
-                [click.Command("test", params=[NAME_ARGUMENT[0]]), HELLO_GROUP[0]],
+                [click_hotoffthehamster.Command("test", params=[NAME_ARGUMENT[0]]), HELLO_GROUP[0]],
             ),
             {
                 "name": "base",
@@ -250,13 +250,13 @@ def test_parameter(obj, expect):
     ],
 )
 def test_command(obj, expect):
-    ctx = click.Context(obj)
+    ctx = click_hotoffthehamster.Context(obj)
     out = obj.to_info_dict(ctx)
     assert out == expect
 
 
 def test_context():
-    ctx = click.Context(HELLO_COMMAND[0])
+    ctx = click_hotoffthehamster.Context(HELLO_COMMAND[0])
     out = ctx.to_info_dict()
     assert out == {
         "command": HELLO_COMMAND[1],
@@ -269,7 +269,7 @@ def test_context():
 
 
 def test_paramtype_no_name():
-    class TestType(click.ParamType):
+    class TestType(click_hotoffthehamster.ParamType):
         pass
 
     assert TestType().to_info_dict()["name"] == "TestType"

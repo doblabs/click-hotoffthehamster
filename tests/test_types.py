@@ -4,27 +4,27 @@ import tempfile
 
 import pytest
 
-import click
-from click import FileError
+import click_hotoffthehamster
+from click_hotoffthehamster import FileError
 
 
 @pytest.mark.parametrize(
     ("type", "value", "expect"),
     [
-        (click.IntRange(0, 5), "3", 3),
-        (click.IntRange(5), "5", 5),
-        (click.IntRange(5), "100", 100),
-        (click.IntRange(max=5), "5", 5),
-        (click.IntRange(max=5), "-100", -100),
-        (click.IntRange(0, clamp=True), "-1", 0),
-        (click.IntRange(max=5, clamp=True), "6", 5),
-        (click.IntRange(0, min_open=True, clamp=True), "0", 1),
-        (click.IntRange(max=5, max_open=True, clamp=True), "5", 4),
-        (click.FloatRange(0.5, 1.5), "1.2", 1.2),
-        (click.FloatRange(0.5, min_open=True), "0.51", 0.51),
-        (click.FloatRange(max=1.5, max_open=True), "1.49", 1.49),
-        (click.FloatRange(0.5, clamp=True), "-0.0", 0.5),
-        (click.FloatRange(max=1.5, clamp=True), "inf", 1.5),
+        (click_hotoffthehamster.IntRange(0, 5), "3", 3),
+        (click_hotoffthehamster.IntRange(5), "5", 5),
+        (click_hotoffthehamster.IntRange(5), "100", 100),
+        (click_hotoffthehamster.IntRange(max=5), "5", 5),
+        (click_hotoffthehamster.IntRange(max=5), "-100", -100),
+        (click_hotoffthehamster.IntRange(0, clamp=True), "-1", 0),
+        (click_hotoffthehamster.IntRange(max=5, clamp=True), "6", 5),
+        (click_hotoffthehamster.IntRange(0, min_open=True, clamp=True), "0", 1),
+        (click_hotoffthehamster.IntRange(max=5, max_open=True, clamp=True), "5", 4),
+        (click_hotoffthehamster.FloatRange(0.5, 1.5), "1.2", 1.2),
+        (click_hotoffthehamster.FloatRange(0.5, min_open=True), "0.51", 0.51),
+        (click_hotoffthehamster.FloatRange(max=1.5, max_open=True), "1.49", 1.49),
+        (click_hotoffthehamster.FloatRange(0.5, clamp=True), "-0.0", 0.5),
+        (click_hotoffthehamster.FloatRange(max=1.5, clamp=True), "inf", 1.5),
     ],
 )
 def test_range(type, value, expect):
@@ -34,17 +34,17 @@ def test_range(type, value, expect):
 @pytest.mark.parametrize(
     ("type", "value", "expect"),
     [
-        (click.IntRange(0, 5), "6", "6 is not in the range 0<=x<=5."),
-        (click.IntRange(5), "4", "4 is not in the range x>=5."),
-        (click.IntRange(max=5), "6", "6 is not in the range x<=5."),
-        (click.IntRange(0, 5, min_open=True), 0, "0<x<=5"),
-        (click.IntRange(0, 5, max_open=True), 5, "0<=x<5"),
-        (click.FloatRange(0.5, min_open=True), 0.5, "x>0.5"),
-        (click.FloatRange(max=1.5, max_open=True), 1.5, "x<1.5"),
+        (click_hotoffthehamster.IntRange(0, 5), "6", "6 is not in the range 0<=x<=5."),
+        (click_hotoffthehamster.IntRange(5), "4", "4 is not in the range x>=5."),
+        (click_hotoffthehamster.IntRange(max=5), "6", "6 is not in the range x<=5."),
+        (click_hotoffthehamster.IntRange(0, 5, min_open=True), 0, "0<x<=5"),
+        (click_hotoffthehamster.IntRange(0, 5, max_open=True), 5, "0<=x<5"),
+        (click_hotoffthehamster.FloatRange(0.5, min_open=True), 0.5, "x>0.5"),
+        (click_hotoffthehamster.FloatRange(max=1.5, max_open=True), 1.5, "x<1.5"),
     ],
 )
 def test_range_fail(type, value, expect):
-    with pytest.raises(click.BadParameter) as exc_info:
+    with pytest.raises(click_hotoffthehamster.BadParameter) as exc_info:
         type.convert(value, None, None)
 
     assert expect in exc_info.value.message
@@ -52,9 +52,9 @@ def test_range_fail(type, value, expect):
 
 def test_float_range_no_clamp_open():
     with pytest.raises(TypeError):
-        click.FloatRange(0, 1, max_open=True, clamp=True)
+        click_hotoffthehamster.FloatRange(0, 1, max_open=True, clamp=True)
 
-    sneaky = click.FloatRange(0, 1, max_open=True)
+    sneaky = click_hotoffthehamster.FloatRange(0, 1, max_open=True)
     sneaky.clamp = True
 
     with pytest.raises(RuntimeError):
@@ -75,11 +75,11 @@ def test_float_range_no_clamp_open():
 )
 def test_cast_multi_default(runner, nargs, multiple, default, expect):
     if nargs == -1:
-        param = click.Argument(["a"], nargs=nargs, default=default)
+        param = click_hotoffthehamster.Argument(["a"], nargs=nargs, default=default)
     else:
-        param = click.Option(["-a"], nargs=nargs, multiple=multiple, default=default)
+        param = click_hotoffthehamster.Option(["-a"], nargs=nargs, multiple=multiple, default=default)
 
-    cli = click.Command("cli", params=[param], callback=lambda a: a)
+    cli = click_hotoffthehamster.Command("cli", params=[param], callback=lambda a: a)
     result = runner.invoke(cli, standalone_mode=False)
     assert result.exception is None
     assert result.return_value == expect
@@ -95,9 +95,9 @@ def test_cast_multi_default(runner, nargs, multiple, default, expect):
     ],
 )
 def test_path_type(runner, cls, expect):
-    cli = click.Command(
+    cli = click_hotoffthehamster.Command(
         "cli",
-        params=[click.Argument(["p"], type=click.Path(path_type=cls))],
+        params=[click_hotoffthehamster.Argument(["p"], type=click_hotoffthehamster.Path(path_type=cls))],
         callback=lambda p: p,
     )
     result = runner.invoke(cli, ["a/b/c.txt"], standalone_mode=False)
@@ -106,7 +106,7 @@ def test_path_type(runner, cls, expect):
 
 
 def _symlinks_supported():
-    with tempfile.TemporaryDirectory(prefix="click-pytest-") as tempdir:
+    with tempfile.TemporaryDirectory(prefix="click_hotoffthehamster-pytest-") as tempdir:
         target = os.path.join(tempdir, "target")
         open(target, "w").close()
         link = os.path.join(tempdir, "link")
@@ -126,9 +126,9 @@ def test_path_resolve_symlink(tmp_path, runner):
     test_file_str = os.fspath(test_file)
     test_file.write_text("")
 
-    path_type = click.Path(resolve_path=True)
-    param = click.Argument(["a"], type=path_type)
-    ctx = click.Context(click.Command("cli", params=[param]))
+    path_type = click_hotoffthehamster.Path(resolve_path=True)
+    param = click_hotoffthehamster.Argument(["a"], type=path_type)
+    ctx = click_hotoffthehamster.Context(click_hotoffthehamster.Command("cli", params=[param]))
 
     test_dir = tmp_path / "dir"
     test_dir.mkdir()
@@ -145,7 +145,7 @@ def test_path_resolve_symlink(tmp_path, runner):
 
 
 def _non_utf8_filenames_supported():
-    with tempfile.TemporaryDirectory(prefix="click-pytest-") as tempdir:
+    with tempfile.TemporaryDirectory(prefix="click_hotoffthehamster-pytest-") as tempdir:
         try:
             f = open(os.path.join(tempdir, "\udcff"), "w")
         except OSError:
@@ -161,23 +161,23 @@ def _non_utf8_filenames_supported():
 )
 def test_path_surrogates(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    type = click.Path(exists=True)
+    type = click_hotoffthehamster.Path(exists=True)
     path = pathlib.Path("\udcff")
 
-    with pytest.raises(click.BadParameter, match="'�' does not exist"):
+    with pytest.raises(click_hotoffthehamster.BadParameter, match="'�' does not exist"):
         type.convert(path, None, None)
 
-    type = click.Path(file_okay=False)
+    type = click_hotoffthehamster.Path(file_okay=False)
     path.touch()
 
-    with pytest.raises(click.BadParameter, match="'�' is a file"):
+    with pytest.raises(click_hotoffthehamster.BadParameter, match="'�' is a file"):
         type.convert(path, None, None)
 
     path.unlink()
-    type = click.Path(dir_okay=False)
+    type = click_hotoffthehamster.Path(dir_okay=False)
     path.mkdir()
 
-    with pytest.raises(click.BadParameter, match="'�' is a directory"):
+    with pytest.raises(click_hotoffthehamster.BadParameter, match="'�' is a directory"):
         type.convert(path, None, None)
 
     path.rmdir()
@@ -191,23 +191,23 @@ def test_path_surrogates(tmp_path, monkeypatch):
         return False
 
     path.touch()
-    type = click.Path(readable=True)
+    type = click_hotoffthehamster.Path(readable=True)
 
-    with pytest.raises(click.BadParameter, match="'�' is not readable"):
+    with pytest.raises(click_hotoffthehamster.BadParameter, match="'�' is not readable"):
         with monkeypatch.context() as m:
             m.setattr(os, "access", no_access)
             type.convert(path, None, None)
 
-    type = click.Path(readable=False, writable=True)
+    type = click_hotoffthehamster.Path(readable=False, writable=True)
 
-    with pytest.raises(click.BadParameter, match="'�' is not writable"):
+    with pytest.raises(click_hotoffthehamster.BadParameter, match="'�' is not writable"):
         with monkeypatch.context() as m:
             m.setattr(os, "access", no_access)
             type.convert(path, None, None)
 
-    type = click.Path(readable=False, executable=True)
+    type = click_hotoffthehamster.Path(readable=False, executable=True)
 
-    with pytest.raises(click.BadParameter, match="'�' is not executable"):
+    with pytest.raises(click_hotoffthehamster.BadParameter, match="'�' is not executable"):
         with monkeypatch.context() as m:
             m.setattr(os, "access", no_access)
             type.convert(path, None, None)
@@ -218,14 +218,14 @@ def test_path_surrogates(tmp_path, monkeypatch):
 @pytest.mark.parametrize(
     "type",
     [
-        click.File(mode="r"),
-        click.File(mode="r", lazy=True),
+        click_hotoffthehamster.File(mode="r"),
+        click_hotoffthehamster.File(mode="r", lazy=True),
     ],
 )
 def test_file_surrogates(type, tmp_path):
     path = tmp_path / "\udcff"
 
-    with pytest.raises(click.BadParameter, match="�': No such file or directory"):
+    with pytest.raises(click_hotoffthehamster.BadParameter, match="�': No such file or directory"):
         type.convert(path, None, None)
 
 
