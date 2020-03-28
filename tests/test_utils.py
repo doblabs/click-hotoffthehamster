@@ -6,32 +6,32 @@ from io import StringIO
 
 import pytest
 
-import click._termui_impl
-import click.utils
-from click._compat import WIN
+import click_hotoffthehamster._termui_impl
+import click_hotoffthehamster.utils
+from click_hotoffthehamster._compat import WIN
 
 
 def test_echo(runner):
     with runner.isolation() as outstreams:
-        click.echo("\N{SNOWMAN}")
-        click.echo(b"\x44\x44")
-        click.echo(42, nl=False)
-        click.echo(b"a", nl=False)
-        click.echo("\x1b[31mx\x1b[39m", nl=False)
+        click_hotoffthehamster.echo("\N{SNOWMAN}")
+        click_hotoffthehamster.echo(b"\x44\x44")
+        click_hotoffthehamster.echo(42, nl=False)
+        click_hotoffthehamster.echo(b"a", nl=False)
+        click_hotoffthehamster.echo("\x1b[31mx\x1b[39m", nl=False)
         bytes = outstreams[0].getvalue().replace(b"\r\n", b"\n")
         assert bytes == b"\xe2\x98\x83\nDD\n42ax"
 
     # if wrapped, we expect bytes to survive.
-    @click.command()
+    @click_hotoffthehamster.command()
     def cli():
-        click.echo(b"\xf6")
+        click_hotoffthehamster.echo(b"\xf6")
 
     result = runner.invoke(cli, [])
     assert result.stdout_bytes == b"\xf6\n"
 
     # Ensure we do not strip for bytes.
     with runner.isolation() as outstreams:
-        click.echo(bytearray(b"\x1b[31mx\x1b[39m"), nl=False)
+        click_hotoffthehamster.echo(bytearray(b"\x1b[31mx\x1b[39m"), nl=False)
         assert outstreams[0].getvalue() == b"\x1b[31mx\x1b[39m"
 
 
@@ -39,7 +39,7 @@ def test_echo_custom_file():
     import io
 
     f = io.StringIO()
-    click.echo("hello", file=f)
+    click_hotoffthehamster.echo("hello", file=f)
     assert f.getvalue() == "hello\n"
 
 
@@ -48,8 +48,8 @@ def test_echo_no_streams(monkeypatch, runner):
     with runner.isolation():
         sys.stdout = None
         sys.stderr = None
-        click.echo("test")
-        click.echo("test", err=True)
+        click_hotoffthehamster.echo("test")
+        click_hotoffthehamster.echo("test", err=True)
 
 
 @pytest.mark.parametrize(
@@ -93,30 +93,30 @@ def test_echo_no_streams(monkeypatch, runner):
     ],
 )
 def test_styling(styles, ref):
-    assert click.style("x y", **styles) == ref
-    assert click.unstyle(ref) == "x y"
+    assert click_hotoffthehamster.style("x y", **styles) == ref
+    assert click_hotoffthehamster.unstyle(ref) == "x y"
 
 
 @pytest.mark.parametrize(("text", "expect"), [("\x1b[?25lx y\x1b[?25h", "x y")])
 def test_unstyle_other_ansi(text, expect):
-    assert click.unstyle(text) == expect
+    assert click_hotoffthehamster.unstyle(text) == expect
 
 
 def test_filename_formatting():
-    assert click.format_filename(b"foo.txt") == "foo.txt"
-    assert click.format_filename(b"/x/foo.txt") == "/x/foo.txt"
-    assert click.format_filename("/x/foo.txt") == "/x/foo.txt"
-    assert click.format_filename("/x/foo.txt", shorten=True) == "foo.txt"
-    assert click.format_filename(b"/x/\xff.txt", shorten=True) == "�.txt"
+    assert click_hotoffthehamster.format_filename(b"foo.txt") == "foo.txt"
+    assert click_hotoffthehamster.format_filename(b"/x/foo.txt") == "/x/foo.txt"
+    assert click_hotoffthehamster.format_filename("/x/foo.txt") == "/x/foo.txt"
+    assert click_hotoffthehamster.format_filename("/x/foo.txt", shorten=True) == "foo.txt"
+    assert click_hotoffthehamster.format_filename(b"/x/\xff.txt", shorten=True) == "�.txt"
 
 
 def test_prompts(runner):
-    @click.command()
+    @click_hotoffthehamster.command()
     def test():
-        if click.confirm("Foo"):
-            click.echo("yes!")
+        if click_hotoffthehamster.confirm("Foo"):
+            click_hotoffthehamster.echo("yes!")
         else:
-            click.echo("no :(")
+            click_hotoffthehamster.echo("no :(")
 
     result = runner.invoke(test, input="y\n")
     assert not result.exception
@@ -130,12 +130,12 @@ def test_prompts(runner):
     assert not result.exception
     assert result.output == "Foo [y/N]: n\nno :(\n"
 
-    @click.command()
+    @click_hotoffthehamster.command()
     def test_no():
-        if click.confirm("Foo", default=True):
-            click.echo("yes!")
+        if click_hotoffthehamster.confirm("Foo", default=True):
+            click_hotoffthehamster.echo("yes!")
         else:
-            click.echo("no :(")
+            click_hotoffthehamster.echo("no :(")
 
     result = runner.invoke(test_no, input="y\n")
     assert not result.exception
@@ -151,8 +151,8 @@ def test_prompts(runner):
 
 
 def test_confirm_repeat(runner):
-    cli = click.Command(
-        "cli", params=[click.Option(["--a/--no-a"], default=None, prompt=True)]
+    cli = click_hotoffthehamster.Command(
+        "cli", params=[click_hotoffthehamster.Option(["--a/--no-a"], default=None, prompt=True)]
     )
     result = runner.invoke(cli, input="\ny\n")
     assert result.output == "A [y/n]: \nError: invalid input\nA [y/n]: y\n"
@@ -163,12 +163,12 @@ def test_prompts_abort(monkeypatch, capsys):
     def f(_):
         raise KeyboardInterrupt()
 
-    monkeypatch.setattr("click.termui.hidden_prompt_func", f)
+    monkeypatch.setattr("click_hotoffthehamster.termui.hidden_prompt_func", f)
 
     try:
-        click.prompt("Password", hide_input=True)
-    except click.Abort:
-        click.echo("interrupted")
+        click_hotoffthehamster.prompt("Password", hide_input=True)
+    except click_hotoffthehamster.Abort:
+        click_hotoffthehamster.echo("interrupted")
 
     out, err = capsys.readouterr()
     assert out == "Password:\ninterrupted\n"
@@ -198,12 +198,12 @@ def _test_gen_func():
 )
 def test_echo_via_pager(monkeypatch, capfd, cat, test):
     monkeypatch.setitem(os.environ, "PAGER", cat)
-    monkeypatch.setattr(click._termui_impl, "isatty", lambda x: True)
+    monkeypatch.setattr(click_hotoffthehamster._termui_impl, "isatty", lambda x: True)
 
     expected_output = test[0]
     test_input = test[1]()
 
-    click.echo_via_pager(test_input)
+    click_hotoffthehamster.echo_via_pager(test_input)
 
     out, err = capfd.readouterr()
     assert out == expected_output
@@ -212,34 +212,34 @@ def test_echo_via_pager(monkeypatch, capfd, cat, test):
 @pytest.mark.skipif(WIN, reason="Test does not make sense on Windows.")
 def test_echo_color_flag(monkeypatch, capfd):
     isatty = True
-    monkeypatch.setattr(click._compat, "isatty", lambda x: isatty)
+    monkeypatch.setattr(click_hotoffthehamster._compat, "isatty", lambda x: isatty)
 
     text = "foo"
-    styled_text = click.style(text, fg="red")
+    styled_text = click_hotoffthehamster.style(text, fg="red")
     assert styled_text == "\x1b[31mfoo\x1b[0m"
 
-    click.echo(styled_text, color=False)
+    click_hotoffthehamster.echo(styled_text, color=False)
     out, err = capfd.readouterr()
     assert out == f"{text}\n"
 
-    click.echo(styled_text, color=True)
+    click_hotoffthehamster.echo(styled_text, color=True)
     out, err = capfd.readouterr()
     assert out == f"{styled_text}\n"
 
     isatty = True
-    click.echo(styled_text)
+    click_hotoffthehamster.echo(styled_text)
     out, err = capfd.readouterr()
     assert out == f"{styled_text}\n"
 
     isatty = False
-    click.echo(styled_text)
+    click_hotoffthehamster.echo(styled_text)
     out, err = capfd.readouterr()
     assert out == f"{text}\n"
 
 
 def test_prompt_cast_default(capfd, monkeypatch):
     monkeypatch.setattr(sys, "stdin", StringIO("\n"))
-    value = click.prompt("value", default="100", type=int)
+    value = click_hotoffthehamster.prompt("value", default="100", type=int)
     capfd.readouterr()
     assert type(value) is int
 
@@ -250,68 +250,68 @@ def test_echo_writing_to_standard_error(capfd, monkeypatch):
         """Emulate keyboard input."""
         monkeypatch.setattr(sys, "stdin", StringIO(text))
 
-    click.echo("Echo to standard output")
+    click_hotoffthehamster.echo("Echo to standard output")
     out, err = capfd.readouterr()
     assert out == "Echo to standard output\n"
     assert err == ""
 
-    click.echo("Echo to standard error", err=True)
+    click_hotoffthehamster.echo("Echo to standard error", err=True)
     out, err = capfd.readouterr()
     assert out == ""
     assert err == "Echo to standard error\n"
 
     emulate_input("asdlkj\n")
-    click.prompt("Prompt to stdin")
+    click_hotoffthehamster.prompt("Prompt to stdin")
     out, err = capfd.readouterr()
     assert out == "Prompt to stdin: "
     assert err == ""
 
     emulate_input("asdlkj\n")
-    click.prompt("Prompt to stderr", err=True)
+    click_hotoffthehamster.prompt("Prompt to stderr", err=True)
     out, err = capfd.readouterr()
     assert out == " "
     assert err == "Prompt to stderr:"
 
     emulate_input("y\n")
-    click.confirm("Prompt to stdin")
+    click_hotoffthehamster.confirm("Prompt to stdin")
     out, err = capfd.readouterr()
     assert out == "Prompt to stdin [y/N]: "
     assert err == ""
 
     emulate_input("y\n")
-    click.confirm("Prompt to stderr", err=True)
+    click_hotoffthehamster.confirm("Prompt to stderr", err=True)
     out, err = capfd.readouterr()
     assert out == " "
     assert err == "Prompt to stderr [y/N]:"
 
-    monkeypatch.setattr(click.termui, "isatty", lambda x: True)
-    monkeypatch.setattr(click.termui, "getchar", lambda: " ")
+    monkeypatch.setattr(click_hotoffthehamster.termui, "isatty", lambda x: True)
+    monkeypatch.setattr(click_hotoffthehamster.termui, "getchar", lambda: " ")
 
-    click.pause("Pause to stdout")
+    click_hotoffthehamster.pause("Pause to stdout")
     out, err = capfd.readouterr()
     assert out == "Pause to stdout\n"
     assert err == ""
 
-    click.pause("Pause to stderr", err=True)
+    click_hotoffthehamster.pause("Pause to stderr", err=True)
     out, err = capfd.readouterr()
     assert out == ""
     assert err == "Pause to stderr\n"
 
 
 def test_echo_with_capsys(capsys):
-    click.echo("Capture me.")
+    click_hotoffthehamster.echo("Capture me.")
     out, err = capsys.readouterr()
     assert out == "Capture me.\n"
 
 
 def test_open_file(runner):
-    @click.command()
-    @click.argument("filename")
+    @click_hotoffthehamster.command()
+    @click_hotoffthehamster.argument("filename")
     def cli(filename):
-        with click.open_file(filename) as f:
-            click.echo(f.read())
+        with click_hotoffthehamster.open_file(filename) as f:
+            click_hotoffthehamster.echo(f.read())
 
-        click.echo("meep")
+        click_hotoffthehamster.echo("meep")
 
     with runner.isolated_filesystem():
         with open("hello.txt", "w") as f:
@@ -327,15 +327,15 @@ def test_open_file(runner):
 
 
 def test_open_file_pathlib_dash(runner):
-    @click.command()
-    @click.argument(
-        "filename", type=click.Path(allow_dash=True, path_type=pathlib.Path)
+    @click_hotoffthehamster.command()
+    @click_hotoffthehamster.argument(
+        "filename", type=click_hotoffthehamster.Path(allow_dash=True, path_type=pathlib.Path)
     )
     def cli(filename):
-        click.echo(str(type(filename)))
+        click_hotoffthehamster.echo(str(type(filename)))
 
-        with click.open_file(filename) as f:
-            click.echo(f.read())
+        with click_hotoffthehamster.open_file(filename) as f:
+            click_hotoffthehamster.echo(f.read())
 
         result = runner.invoke(cli, ["-"], input="value")
         assert result.exception is None
@@ -343,11 +343,11 @@ def test_open_file_pathlib_dash(runner):
 
 
 def test_open_file_ignore_errors_stdin(runner):
-    @click.command()
-    @click.argument("filename")
+    @click_hotoffthehamster.command()
+    @click_hotoffthehamster.argument("filename")
     def cli(filename):
-        with click.open_file(filename, errors="ignore") as f:
-            click.echo(f.read())
+        with click_hotoffthehamster.open_file(filename, errors="ignore") as f:
+            click_hotoffthehamster.echo(f.read())
 
     result = runner.invoke(cli, ["-"], input=os.urandom(16))
     assert result.exception is None
@@ -358,7 +358,7 @@ def test_open_file_respects_ignore(runner):
         with open("test.txt", "w") as f:
             f.write("Hello world!")
 
-        with click.open_file("test.txt", encoding="utf8", errors="ignore") as f:
+        with click_hotoffthehamster.open_file("test.txt", encoding="utf8", errors="ignore") as f:
             assert f.errors == "ignore"
 
 
@@ -367,7 +367,7 @@ def test_open_file_ignore_invalid_utf8(runner):
         with open("test.txt", "wb") as f:
             f.write(b"\xe2\x28\xa1")
 
-        with click.open_file("test.txt", encoding="utf8", errors="ignore") as f:
+        with click_hotoffthehamster.open_file("test.txt", encoding="utf8", errors="ignore") as f:
             f.read()
 
 
@@ -376,7 +376,7 @@ def test_open_file_ignore_no_encoding(runner):
         with open("test.bin", "wb") as f:
             f.write(os.urandom(16))
 
-        with click.open_file("test.bin", errors="ignore") as f:
+        with click_hotoffthehamster.open_file("test.bin", errors="ignore") as f:
             f.read()
 
 
@@ -388,10 +388,10 @@ def test_open_file_atomic_permissions_existing_file(runner, permissions):
             f.write("content")
         os.chmod("existing.txt", permissions)
 
-        @click.command()
-        @click.argument("filename")
+        @click_hotoffthehamster.command()
+        @click_hotoffthehamster.argument("filename")
         def cli(filename):
-            click.open_file(filename, "w", atomic=True).close()
+            click_hotoffthehamster.open_file(filename, "w", atomic=True).close()
 
         result = runner.invoke(cli, ["existing.txt"])
         assert result.exception is None
@@ -402,10 +402,10 @@ def test_open_file_atomic_permissions_existing_file(runner, permissions):
 def test_open_file_atomic_permissions_new_file(runner):
     with runner.isolated_filesystem():
 
-        @click.command()
-        @click.argument("filename")
+        @click_hotoffthehamster.command()
+        @click_hotoffthehamster.argument("filename")
         def cli(filename):
-            click.open_file(filename, "w", atomic=True).close()
+            click_hotoffthehamster.open_file(filename, "w", atomic=True).close()
 
         # Create a test file to get the expected permissions for new files
         # according to the current umask.
@@ -423,7 +423,7 @@ def test_iter_keepopenfile(tmpdir):
     p = tmpdir.mkdir("testdir").join("testfile")
     p.write("\n".join(expected))
     with p.open() as f:
-        for e_line, a_line in zip(expected, click.utils.KeepOpenFile(f)):
+        for e_line, a_line in zip(expected, click_hotoffthehamster.utils.KeepOpenFile(f)):
             assert e_line == a_line.strip()
 
 
@@ -432,7 +432,7 @@ def test_iter_lazyfile(tmpdir):
     p = tmpdir.mkdir("testdir").join("testfile")
     p.write("\n".join(expected))
     with p.open() as f:
-        with click.utils.LazyFile(f.name) as lf:
+        with click_hotoffthehamster.utils.LazyFile(f.name) as lf:
             for e_line, a_line in zip(expected, lf):
                 assert e_line == a_line.strip()
 
@@ -456,19 +456,19 @@ class MockMain:
     ],
 )
 def test_detect_program_name(path, main, expected):
-    assert click.utils._detect_program_name(path, _main=MockMain(main)) == expected
+    assert click_hotoffthehamster.utils._detect_program_name(path, _main=MockMain(main)) == expected
 
 
 def test_expand_args(monkeypatch):
     user = os.path.expanduser("~")
-    assert user in click.utils._expand_args(["~"])
+    assert user in click_hotoffthehamster.utils._expand_args(["~"])
     monkeypatch.setenv("CLICK_TEST", "hello")
-    assert "hello" in click.utils._expand_args(["$CLICK_TEST"])
-    assert "pyproject.toml" in click.utils._expand_args(["*.toml"])
-    assert os.path.join("docs", "conf.py") in click.utils._expand_args(["**/conf.py"])
-    assert "*.not-found" in click.utils._expand_args(["*.not-found"])
+    assert "hello" in click_hotoffthehamster.utils._expand_args(["$CLICK_TEST"])
+    assert "pyproject.toml" in click_hotoffthehamster.utils._expand_args(["*.toml"])
+    assert os.path.join("docs", "conf.py") in click_hotoffthehamster.utils._expand_args(["**/conf.py"])
+    assert "*.not-found" in click_hotoffthehamster.utils._expand_args(["*.not-found"])
     # a bad glob pattern, such as a pytest identifier, should return itself
-    assert click.utils._expand_args(["test.py::test_bad"])[0] == "test.py::test_bad"
+    assert click_hotoffthehamster.utils._expand_args(["test.py::test_bad"])[0] == "test.py::test_bad"
 
 
 @pytest.mark.parametrize(
@@ -503,5 +503,5 @@ def test_make_default_short_help(value, max_length, alter, expect):
     if alter:
         value = alter(value)
 
-    out = click.utils.make_default_short_help(value, max_length)
+    out = click_hotoffthehamster.utils.make_default_short_help(value, max_length)
     assert out == expect

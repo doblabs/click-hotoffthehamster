@@ -1,12 +1,12 @@
 import pytest
 
-import click
+import click_hotoffthehamster
 
 
 def test_command_no_parens(runner):
-    @click.command
+    @click_hotoffthehamster.command
     def cli():
-        click.echo("hello")
+        click_hotoffthehamster.echo("hello")
 
     result = runner.invoke(cli)
     assert result.exception is None
@@ -14,19 +14,19 @@ def test_command_no_parens(runner):
 
 
 def test_custom_command_no_parens(runner):
-    class CustomCommand(click.Command):
+    class CustomCommand(click_hotoffthehamster.Command):
         pass
 
-    class CustomGroup(click.Group):
+    class CustomGroup(click_hotoffthehamster.Group):
         command_class = CustomCommand
 
-    @click.group(cls=CustomGroup)
+    @click_hotoffthehamster.group(cls=CustomGroup)
     def grp():
         pass
 
     @grp.command
     def cli():
-        click.echo("hello custom command class")
+        click_hotoffthehamster.echo("hello custom command class")
 
     result = runner.invoke(cli)
     assert result.exception is None
@@ -34,21 +34,21 @@ def test_custom_command_no_parens(runner):
 
 
 def test_group_no_parens(runner):
-    @click.group
+    @click_hotoffthehamster.group
     def grp():
-        click.echo("grp1")
+        click_hotoffthehamster.echo("grp1")
 
     @grp.command
     def cmd1():
-        click.echo("cmd1")
+        click_hotoffthehamster.echo("cmd1")
 
     @grp.group
     def grp2():
-        click.echo("grp2")
+        click_hotoffthehamster.echo("grp2")
 
     @grp2.command
     def cmd2():
-        click.echo("cmd2")
+        click_hotoffthehamster.echo("cmd2")
 
     result = runner.invoke(grp, ["cmd1"])
     assert result.exception is None
@@ -60,12 +60,12 @@ def test_group_no_parens(runner):
 
 
 def test_params_argument(runner):
-    opt = click.Argument(["a"])
+    opt = click_hotoffthehamster.Argument(["a"])
 
-    @click.command(params=[opt])
-    @click.argument("b")
+    @click_hotoffthehamster.command(params=[opt])
+    @click_hotoffthehamster.argument("b")
     def cli(a, b):
-        click.echo(f"{a} {b}")
+        click_hotoffthehamster.echo(f"{a} {b}")
 
     assert cli.params[0].name == "a"
     assert cli.params[1].name == "b"
@@ -88,5 +88,5 @@ def test_generate_name(name: str) -> None:
         pass
 
     f.__name__ = name
-    f = click.command(f)
+    f = click_hotoffthehamster.command(f)
     assert f.name == "init-data"
