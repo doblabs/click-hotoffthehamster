@@ -246,7 +246,30 @@ class HelpFormatter:
         first_col = max(min(widths[0], col_max), col_min) + col_spacing
 
         for first, second in iter_rows(rows, len(widths)):
+            # FIXME/2023-05-14 16:59: Verify this...
+            # - v7:
+            #  self.write("{:>{w}}{}".format("", first, w=self.current_indent))
+            # - v8:
+            #  self.write(f"{'':>{self.current_indent}}{first}")
+            # - myV:
+            # (lb): I added this block to wrap long [options|list] at
+            # the specified width, otherwise it bleeds all the way to
+            # edge of the terminal, which looks incorrect.
+            first_len = term_len(first)
+            first_width = max(self.width - 2, 10)
+            if first_len > first_width:
+                try:
+                    space_bracket_idx = first.index(" [")
+                    first = wrap_text(
+                        first,
+                        first_width,
+                        subsequent_indent=" " * (space_bracket_idx + 2 + 2),
+                    )
+                except ValueError:
+                    pass
+
             self.write(f"{'':>{self.current_indent}}{first}")
+
             if not second:
                 self.write("\n")
                 continue
