@@ -2829,7 +2829,14 @@ class Option(Parameter):
 
         if extra:
             extra_str = "; ".join(extra)
-            help = f"{help}  [{extra_str}]" if help else f"[{extra_str}]"
+            # FIXME/2023-05-14 16:53: Audit this. Here's upstream 8.1.3:
+            # help = f"{help}  [{extra_str}]" if help else f"[{extra_str}]"
+            if help and len(help) > 1 and help.endswith("."):
+                # (lb): Space is precious, so prefer one space before bracket, not
+                # two; and honor proper sentences, sneaking extra before final period.
+                help = f"{help[:-1]} [{extra_str}]"
+            else:
+                help = f"{help} [{extra_str}]" if help else f"[{extra_str}]"
 
         return ("; " if any_prefix_is_slash else " / ").join(rv), help
 
