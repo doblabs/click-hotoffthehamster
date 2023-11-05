@@ -1,10 +1,13 @@
-[project]
-name = "click"
-version = "8.2.0.dev"
+[tool.poetry]
+name = "click-hotoffthehamster"
+# CLICK/2023-11-11: Latest is "8.2.0.dev" aka 8.1.7~26 [ca5e1c3].
+version = "0.0.0"
 description = "Composable command line interface toolkit"
 readme = "README.rst"
-license = {file = "LICENSE.rst"}
-maintainers = [{name = "Pallets", email = "contact@palletsprojects.com"}]
+# Poretry: license, authors, maintainers must be strings.
+license = "BSD-3-Clause"
+maintainers = ["Pallets <contact@palletsprojects.com>"]
+authors = ["Armin Ronacher <armin.ronacher@active-4.com>"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
@@ -12,12 +15,8 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python",
 ]
-requires-python = ">=3.8"
-dependencies = [
-    "colorama; platform_system == 'Windows'",
-]
 
-[project.urls]
+[tool.poetry.urls]
 Donate = "https://palletsprojects.com/donate"
 Documentation = "https://click.palletsprojects.com/"
 Changes = "https://click.palletsprojects.com/changes/"
@@ -25,12 +24,8 @@ Changes = "https://click.palletsprojects.com/changes/"
 "Issue Tracker" = "https://github.com/pallets/click/issues/"
 Chat = "https://discord.gg/pallets"
 
-[build-system]
-requires = ["flit_core<4"]
-build-backend = "flit_core.buildapi"
-
 [tool.flit.module]
-name = "click"
+name = "click_hotoffthehamster"
 
 [tool.flit.sdist]
 include = [
@@ -51,14 +46,14 @@ filterwarnings = ["error"]
 
 [tool.coverage.run]
 branch = true
-source = ["click", "tests"]
+source = ["click_hotoffthehamster", "tests"]
 
 [tool.coverage.paths]
 source = ["src", "*/site-packages"]
 
 [tool.mypy]
 python_version = "3.8"
-files = ["src/click"]
+files = ["src/click_hotoffthehamster"]
 show_error_codes = true
 pretty = true
 strict = true
@@ -70,3 +65,238 @@ module = [
     "colorama.*",
 ]
 ignore_missing_imports = true
+
+# ***
+
+# SAVVY/2023-11-11: Upstream Click uses Flit:
+#   https://flit.pypa.io/en/stable/
+[build-system]
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning"]
+build-backend = "poetry_dynamic_versioning.backend"
+
+# ***
+
+# CXREF: ~/.kit/py/click-hotoffthehamster/requirements/build.txt
+
+[tool.poetry.group.build]
+optional = true
+
+[tool.poetry.group.build.dependencies]
+build = "^0.10.0"
+    # via -r requirements/build.in
+packaging = "^23.1"
+    # via build
+pyproject-hooks = "^1.0.0"
+    # via build
+
+# ***
+
+# CXREF: ~/.kit/py/click-hotoffthehamster/requirements/docs.txt
+
+[tool.poetry.group.docs]
+optional = true
+
+[tool.poetry.group.docs.dependencies]
+alabaster = "^0.7.13"
+    # via sphinx
+babel = "^2.12.1"
+    # via sphinx
+certifi = "^2023.7.22"
+    # via requests
+charset-normalizer = "^3.2.0"
+    # via requests
+docutils = "^0.18.1"
+    # via
+    #   sphinx
+    #   sphinx-tabs
+idna = "^3.4"
+    # via requests
+imagesize = "^1.4.1"
+    # via sphinx
+jinja2 = "^3.1.2"
+    # via sphinx
+markupsafe = "^2.1.3"
+    # via jinja2
+packaging = "^23.1"
+    # via
+    #   pallets-sphinx-themes
+    #   sphinx
+pallets-sphinx-themes = "^2.1.1"
+    # via -r requirements/docs.in
+pygments = "^2.16.1"
+    # via
+    #   sphinx
+    #   sphinx-tabs
+requests = "^2.31.0"
+    # via sphinx
+snowballstemmer = "^2.2.0"
+    # via sphinx
+# sphinx = "^7.2.1"
+sphinx = [
+    {version = "^6.2.1", python = "~3.8"},
+    {version = "^7.2.6", python = "^3.9"},
+]
+    # via
+    #   -r requirements/docs.in
+    #   pallets-sphinx-themes
+    #   sphinx-issues
+    #   sphinx-tabs
+    #   sphinxcontrib-applehelp
+    #   sphinxcontrib-devhelp
+    #   sphinxcontrib-htmlhelp
+    #   sphinxcontrib-log-cabinet
+    #   sphinxcontrib-qthelp
+    #   sphinxcontrib-serializinghtml
+sphinx-issues = "^3.0.1"
+    # via -r requirements/docs.in
+sphinx-tabs = "^3.4.1"
+    # via -r requirements/docs.in
+# sphinxcontrib-applehelp = "^1.0.7"
+sphinxcontrib-applehelp = [
+    {version = "==1.0.4", python = "~3.8"},
+    {version = "^1.0.7", python = "^3.9"},
+]
+    # via sphinx
+# sphinxcontrib-devhelp = "^1.0.5"
+sphinxcontrib-devhelp = [
+    {version = "==1.0.2", python = "~3.8"},
+    {version = "^1.0.5", python = "^3.9"},
+]
+    # via sphinx
+# sphinxcontrib-htmlhelp = "^2.0.4"
+sphinxcontrib-htmlhelp = [
+    {version = "==2.0.1", python = "~3.8"},
+    {version = "^2.0.4", python = "^3.9"},
+]
+    # via sphinx
+sphinxcontrib-jsmath = "^1.0.1"
+# sphinxcontrib-jsmath = [
+#     {version = "==1.0.1", python = "~3.8"},
+#     {version = "^1.0.1", python = "^3.9"},
+# ]
+    # via sphinx
+sphinxcontrib-log-cabinet = "^1.0.1"
+# sphinxcontrib-log-cabinet = [
+#     {version = "==1.0.1", python = "~3.8"},
+#     {version = "^1.0.1", python = "^3.9"},
+# ]
+    # via -r requirements/docs.in
+# sphinxcontrib-qthelp = "^1.0.6"
+sphinxcontrib-qthelp = [
+    {version = "==1.0.3", python = "~3.8"},
+    {version = "^1.0.6", python = "^3.9"},
+]
+    # via sphinx
+# sphinxcontrib-serializinghtml = "^1.1.8"
+sphinxcontrib-serializinghtml = [
+    {version = "==1.1.5", python = "~3.8"},
+    {version = "^1.1.8", python = "^3.9"},
+]
+    # via sphinx
+urllib3 = "^2.0.4"
+    # via requests
+
+# ***
+
+# CXREF: ~/.kit/py/click-hotoffthehamster/requirements/tests.txt
+
+[tool.poetry.group.tests]
+optional = true
+
+[tool.poetry.group.tests.dependencies]
+iniconfig = "^2.0.0"
+    # via pytest
+packaging = "^23.1"
+    # via pytest
+pluggy = "^1.2.0"
+    # via pytest
+pytest = "^7.4.0"
+    # via -r requirements/tests.in
+
+# ***
+
+# CXREF: ~/.kit/py/click-hotoffthehamster/requirements/typing.txt
+
+[tool.poetry.group.typing]
+optional = true
+
+[tool.poetry.group.typing.dependencies]
+mypy = "^1.5.1"
+    # via -r requirements/typing.in
+mypy-extensions = "^1.0.0"
+    # via mypy
+nodeenv = "^1.8.0"
+    # via pyright
+pyright = "^1.1.323"
+    # via -r requirements/typing.in
+typing-extensions = "^4.7.1"
+    # via mypy
+
+# ***
+
+# CXREF: ~/.kit/py/click-hotoffthehamster/requirements/dev.txt
+
+[tool.poetry.group.click_dev]
+optional = true
+
+[tool.poetry.group.click_dev.dependencies]
+build = "^0.10.0"
+    # via pip-tools
+cachetools = "^5.3.1"
+    # via tox
+cfgv = "^3.4.0"
+    # via pre-commit
+chardet = "^5.2.0"
+    # via tox
+# DUNNO/2023-11-11 19:18: How does Click have itself as a dependency?!
+#  click = "^8.1.6"
+    # via
+    #   pip-compile-multi
+    #   pip-tools
+colorama = "^0.4.6"
+    # via tox
+distlib = "^0.3.7"
+    # via virtualenv
+filelock = "^3.12.2"
+    # via
+    #   tox
+    #   virtualenv
+identify = "^2.5.26"
+    # via pre-commit
+pip-compile-multi = "^2.6.3"
+    # via -r requirements/dev.in
+pip-tools = "^7.3.0"
+    # via pip-compile-multi
+platformdirs = "^3.10.0"
+    # via
+    #   tox
+    #   virtualenv
+pre-commit = "^3.3.3"
+    # via -r requirements/dev.in
+pyproject-api = "^1.5.4"
+    # via tox
+pyproject-hooks = "^1.0.0"
+    # via build
+pyyaml = "^6.0.1"
+    # via pre-commit
+toposort = "^1.10"
+    # via pip-compile-multi
+tox = "^4.9.0"
+    # via -r requirements/dev.in
+virtualenv = "^20.24.3"
+    # via
+    #   pre-commit
+    #   tox
+wheel = "^0.41.1"
+    # via pip-tools
+
+# ***
+
+[tool.poetry.dependencies]
+# Python versions supported (required).
+python = "^3.8"
+
+# Re: markers:
+# https://python-poetry.org/docs/dependency-specification/#using-environment-markers
+colorama = { version = '^0.4.6', markers = "sys_platform == 'win32'" }
+
