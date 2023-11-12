@@ -59,7 +59,7 @@ class ParamType:
         """Gather information that could be useful for a tool generating
         user-facing documentation.
 
-        Use :meth:`click.Context.to_info_dict` to traverse the entire
+        Use :meth:`click_hotoffthehamster.Context.to_info_dict` to traverse the entire
         CLI structure.
 
         .. versionadded:: 8.0
@@ -142,7 +142,7 @@ class ParamType:
         self, ctx: Context, param: Parameter, incomplete: str
     ) -> list[CompletionItem]:
         """Return a list of
-        :class:`~click.shell_completion.CompletionItem` objects for the
+        :class:`~click_hotoffthehamster.shell_completion.CompletionItem` objects for the
         incomplete value. Most types do not provide completions, but
         some do, and this allows custom types to provide custom
         completions as well.
@@ -322,7 +322,7 @@ class Choice(ParamType):
 
         .. versionadded:: 8.0
         """
-        from click.shell_completion import CompletionItem
+        from click_hotoffthehamster.shell_completion import CompletionItem
 
         str_choices = map(str, self.choices)
 
@@ -519,7 +519,7 @@ class IntParamType(_NumberParamTypeBase):
 
 
 class IntRange(_NumberRangeBase, IntParamType):
-    """Restrict an :data:`click.INT` value to a range of accepted
+    """Restrict an :data:`click_hotoffthehamster.INT` value to a range of accepted
     values. See :ref:`ranges`.
 
     If ``min`` or ``max`` are not passed, any value is accepted in that
@@ -553,7 +553,7 @@ class FloatParamType(_NumberParamTypeBase):
 
 
 class FloatRange(_NumberRangeBase, FloatParamType):
-    """Restrict a :data:`click.FLOAT` value to a range of accepted
+    """Restrict a :data:`click_hotoffthehamster.FLOAT` value to a range of accepted
     values. See :ref:`ranges`.
 
     If ``min`` or ``max`` are not passed, any value is accepted in that
@@ -757,7 +757,7 @@ class File(ParamType):
 
         .. versionadded:: 8.0
         """
-        from click.shell_completion import CompletionItem
+        from click_hotoffthehamster.shell_completion import CompletionItem
 
         return [CompletionItem(incomplete, type="file")]
 
@@ -784,7 +784,7 @@ class Path(ParamType):
         done by the shell only.
     :param allow_dash: Allow a single dash as a value, which indicates
         a standard stream (but does not open it). Use
-        :func:`~click.open_file` to handle opening this value.
+        :func:`~click_hotoffthehamster.open_file` to handle opening this value.
     :param path_type: Convert the incoming path value to this type. If
         ``None``, keep Python's default, which is ``str``. Useful to
         convert to :class:`pathlib.Path`.
@@ -941,7 +941,7 @@ class Path(ParamType):
 
         .. versionadded:: 8.0
         """
-        from click.shell_completion import CompletionItem
+        from click_hotoffthehamster.shell_completion import CompletionItem
 
         type = "dir" if self.dir_okay and not self.file_okay else "file"
         return [CompletionItem(incomplete, type=type)]
