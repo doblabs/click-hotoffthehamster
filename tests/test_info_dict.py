@@ -1,3 +1,5 @@
+import copy
+
 import pytest
 
 import click_hotoffthehamster.types
@@ -33,6 +35,8 @@ HELP_OPTION = (
         "hidden": False,
     },
 )
+# Because Command.get_help_option's `hidden=ctx.parent is not None`.
+HELP_OPTION_NESTED = (None, {**HELP_OPTION[1], "hidden": True})
 NAME_ARGUMENT = (
     click_hotoffthehamster.Argument(["name"]),
     {
@@ -81,8 +85,10 @@ HELLO_COMMAND = (
         "deprecated": False,
     },
 )
+HELLO_COMMAND_NESTED = copy.deepcopy(HELLO_COMMAND)
+HELLO_COMMAND_NESTED[1]["params"][1]["hidden"] = True
 HELLO_GROUP = (
-    click_hotoffthehamster.Group("cli", [HELLO_COMMAND[0]]),
+    click_hotoffthehamster.Group("cli", [HELLO_COMMAND_NESTED[0]]),
     {
         "name": "cli",
         "params": [HELP_OPTION[1]],
@@ -91,10 +97,12 @@ HELLO_GROUP = (
         "short_help": None,
         "hidden": False,
         "deprecated": False,
-        "commands": {"hello": HELLO_COMMAND[1]},
+        "commands": {"hello": HELLO_COMMAND_NESTED[1]},
         "chain": False,
     },
 )
+HELLO_GROUP_NESTED = copy.deepcopy(HELLO_GROUP)
+HELLO_GROUP_NESTED[1]["params"] = [HELP_OPTION_NESTED[1]]
 
 
 @pytest.mark.parametrize(
@@ -235,7 +243,7 @@ def test_parameter(obj, expect):
                 "base",
                 [
                     click_hotoffthehamster.Command("test", params=[NAME_ARGUMENT[0]]),
-                    HELLO_GROUP[0],
+                    HELLO_GROUP_NESTED[0],
                 ],
             ),
             {
@@ -247,10 +255,10 @@ def test_parameter(obj, expect):
                 "hidden": False,
                 "deprecated": False,
                 "commands": {
-                    "cli": HELLO_GROUP[1],
+                    "cli": HELLO_GROUP_NESTED[1],
                     "test": {
                         "name": "test",
-                        "params": [NAME_ARGUMENT[1], HELP_OPTION[1]],
+                        "params": [NAME_ARGUMENT[1], HELP_OPTION_NESTED[1]],
                         "help": None,
                         "epilog": None,
                         "short_help": None,
