@@ -69,6 +69,9 @@ from .utils import get_binary_stream as get_binary_stream
 from .utils import get_text_stream as get_text_stream
 from .utils import open_file as open_file
 
+# As managed by poetry-dynamic-versionion.
+__version__ = ""
+
 
 def __getattr__(name: str) -> object:
     import warnings
