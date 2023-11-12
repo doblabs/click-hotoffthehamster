@@ -1,3 +1,5 @@
+---
+
 name: 'Lock threads'
 # Lock closed issues that have not received any further activity for
 # two weeks. This does not close open issues, only humans may do that.
