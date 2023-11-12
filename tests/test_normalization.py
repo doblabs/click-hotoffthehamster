@@ -1,6 +1,5 @@
 import click_hotoffthehamster
 
-
 CONTEXT_SETTINGS = dict(token_normalize_func=lambda x: x.lower())
 
 
