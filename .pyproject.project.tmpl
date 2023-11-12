@@ -1,166 +1,349 @@
 {% extends ".pyproject.tmpl" %}
 
 # vim:tw=0:ts=4:sw=4:et:norl:ft=toml
-# Author: Landon Bouma <https://tallybark.com/>
-# Project: https://github.com/doblabs/easy-as-pypi#🥧
-# License: MIT
+# Project: https://github.com/doblabs/click-hotoffthehamster#🪝
 
-# Copyright (c) © 2020-2023 Landon Bouma. All Rights Reserved.
-
-{% block project_meta -%}
+{%- block project_meta -%}
 
 [tool.poetry]
-# REFER: https://peps.python.org/pep-0621/
-#   https://packaging.python.org/en/latest/specifications/declaring-project-metadata/
-
-name = "easy-as-pypi"
+name = "click-hotoffthehamster"
+# CLICK/2023-11-11: Latest is "8.2.0.dev" aka 8.1.7~26 [ca5e1c3].
 version = "0.0.0"
-description = "Bootstrapping your next Python CLI made easy as PyPI"
-
-authors = ["Landon Bouma <doblabs@tallybark.com>"]
-maintainers = ["Tally Bark LLC <doblabs@tallybark.com>"]
-
-license = "MIT"
+description = "Composable command line interface toolkit"
 readme = "README.rst"
-
-# REFER: https://pypi.org/classifiers/
+# Poretry: license, authors, maintainers must be strings.
+license = "BSD-3-Clause"
+maintainers = ["Pallets <contact@palletsprojects.com>"]
+authors = ["Armin Ronacher <armin.ronacher@active-4.com>"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
-    "Natural Language :: English",
+    "License :: OSI Approved :: BSD License",
     "Operating System :: OS Independent",
-    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Programming Language :: Python",
 ]
 
-# Keywords for PyPI to display, and to use for search results.
-keywords = [
-    "python",
-    "boilerplate",
-    "pyoilerplate",
-    "scaffolding",
-    "framework",
-    "CLI",
-    "TUI",
-    "skeleton",
-    "cookiecutter",
-]
+[tool.poetry.urls]
+Donate = "https://palletsprojects.com/donate"
+Documentation = "https://click.palletsprojects.com/"
+Changes = "https://click.palletsprojects.com/changes/"
+"Source Code" = "https://github.com/pallets/click/"
+"Issue Tracker" = "https://github.com/pallets/click/issues/"
+Chat = "https://discord.gg/pallets"
+# For update-faithful-file file rendering:
+repository = "https://github.com/doblabs/click-hotoffthehamster#🪝"
 
-# poetry build excludes __pycache__ dirs
-# and whatever Git ignores (.gitignore).
-# Here we add files to the source dist.
-#
-# REFER: https://python-poetry.org/docs/pyproject/#include-and-exclude
+[tool.flit.module]
+name = "click_hotoffthehamster"
 
+[tool.flit.sdist]
 include = [
-    # Included by default:
-    #  { path = "LICENSE", format = "sdist" },
-    #  { path = "README.rst", format = "sdist" },
-    #  { path = "pyproject.toml", format = "sdist" },
-    { path = "*.rst", format = "sdist" },
-    { path = "tests/", format = "sdist" },
-    # Omitting: Makefile, dotfiles, docs/, etc.
-    # Learning: How you can inflate the wheel:
-    #  { path = "for_wheel.txt", format = ["sdist", "wheel"] }
+    "docs/",
+    "examples/",
+    "requirements/",
+    "tests/",
+    "CHANGES.rst",
+    "tox.ini",
+]
+exclude = [
+    "docs/_build/",
 ]
 
-# Note that Poetry looks for packages under src/ by default, but
-# we could specify the path explicitly, e.g.,
+# ISOFF/2023-11-11: Click's config. See EAPP's below.
 #
-#   packages = [{include = "the_package_name", from = "src"}]
+#  [tool.pytest.ini_options]
+#  testpaths = ["tests"]
+#  filterwarnings = ["error"]
+#
+#  [tool.coverage.run]
+#  branch = true
+#  source = ["click_hotoffthehamster", "tests"]
 
-# ***
+[tool.coverage.paths]
+source = ["src", "*/site-packages"]
 
-# YOU: Disable this if your project derived from easy-as-pypi
-#      does not have a runnable script.
-#      - Otherwise set this to the package entry point.
+[tool.mypy]
+python_version = "3.8"
+files = ["src/click_hotoffthehamster"]
+show_error_codes = true
+pretty = true
+strict = true
+local_partial_types = true
+warn_unreachable = true
 
-[tool.poetry.scripts]
-easy-as-pypi = "easy_as_pypi:cli"
+[[tool.mypy.overrides]]
+module = [
+    "colorama.*",
+]
+ignore_missing_imports = true
 
 # ***
 
 [tool.easy_as_pypi]
-author = "Landon Bouma <https://tallybark.com/>"
-copy_years_owner = "2020-2023 Landon Bouma"
+author = "Armin Ronacher <armin.ronacher@active-4.com>"
+copy_years_owner = "2014-2023 Armin Ronacher"
 coc_contact_email = "tallybark+doblabs -at- gmail.com"
 
-# ***
+# SAVVY/2023-11-11: Upstream Click uses Flit:
+#   https://flit.pypa.io/en/stable/
 
-[tool.poetry.urls]
-
-# HOWTO: Add project URLs to this table. If you use special keywords in
-# the name or certain domains in the URL, PyPI will treat them specially
-# or at least iconify them.
-# - These names are special:
-#     "download"
-#     "home", "homepage", "home page"
-#     "changelog", "change log", "changes", "release notes",
-#         "news", "what's new", "history"
-#     "docs*", "documentation*"
-#     "bug*", "issue*", "tracker*", "report*"
-#     "funding*", "donate*", "donation*", "sponsor*"
-# - REFER: See the source for specifics:
-#     https://github.com/pypi/warehouse/blob/main/warehouse/templates/packaging/detail.html
-# - THANX: Here's also a nice graphic:
-#     https://daniel.feldroy.com/posts/2023-08-pypi-project-urls-cheatsheet
-
-# WIRED: The Sphinx config (docs/conf.py) and .github/bin/update-poetry
-#        require that 'homepage' or 'repository' is set.
-
-homepage = "https://github.com/doblabs/easy-as-pypi#🥧"
-
-# FIXME/TRYME/2023-11-07 02:14: What happens if you specific both? Two links?
-# Include 'repository' unless same as homepage.
-#  repository = "https://github.com/doblabs/easy-as-pypi"
-# FIXME/TRYME/2023-11-06 15:15: Does the name here affect PyPI page at all?
-#  "Source Code" = "https://github.com/doblabs/easy-as-pypi"
-
-# history = "https://github.com/doblabs/easy-as-pypi/blob/release/HISTORY.rst"
-"What's New" = "https://github.com/doblabs/easy-as-pypi/blob/release/HISTORY.rst"
-
-# "Documentation" = "https://easy-as-pypi.readthedocs.io/en/latest"
-documentation = "https://easy-as-pypi.readthedocs.io/en/latest"
-
-# FIXME/TRYME/2023-11-06 15:15: Does the name here affect PyPI page at all?
-# "Bug Tracker" = "https://github.com/doblabs/easy-as-pypi/issues"
-issues = "https://github.com/doblabs/easy-as-pypi/issues"
-
-download = "https://pypi.org/project/easy-as-pypi/#files"
-
-# THOTS/2023-11-06 15:19: I like 'funding' the best.
-#
-#   sponsor = "https://please/give/me/money"
-#   funding = "https://please/give/me/money"
-#   donate = "https://please/give/me/money"
-
-# LATER/2023-11-06 15:19: Perhaps someday I'll create project socials,
-# if I have reason to and if I think I can stay connected regularly.
-#
-#   mastodon = "https://mastodon/server/@me"
-#   twitter = "https://twitter/or/x"
-#   slack = "https://server/on/slack"
-#   reddit = "https://reddit/r/area"
-#   discord = "https://discord/area"
-#   gitter = "https://gitter/area"
-
-{% endblock -%}
+{% endblock %}
 
 {# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #}
 
-{% block isort_known_third_party -%}
-    "click",
+{% block flake8_per_file_ignores -%}
+    # noqa: F401: imported but unused
+    "src/click_hotoffthehamster/__init__.py:F401",
 {%- endblock %}
 
 {# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #}
 
-{# {% block deps_test_fakers_and_factories -%}
- # ...
- # {% endblock -%}
+{# {% block isort_known_third_party -%}
+ #     #
+ # {%- endblock %}
  #}
 
 {# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #}
 
-{% block project_dependencies -%}
+{% block docstyle_deps_doc8 -%}
+# ISOFF/2023-11-11: Multiple Click Sphinx deps. require docutils (<0.19.0),
+#                   except doc8 (1.1.1) depends on docutils (>=0.19,<0.21).
+#  doc8 = ">=1.1.1"
+{%- endblock %}
 
-click = "^8.0.0"
-{% endblock %}
+{# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #}
+
+{%- block project_dependencies -%}
+
+# Re: markers:
+# https://python-poetry.org/docs/dependency-specification/#using-environment-markers
+colorama = { version = '^0.4.6', markers = "sys_platform == 'win32'" }
+
+# ***
+
+# CXREF: ~/.kit/py/click-hotoffthehamster/requirements/build.txt
+
+[tool.poetry.group.project_dist]
+optional = true
+
+[tool.poetry.group.project_dist.dependencies]
+build = "^0.10.0"
+    # via -r requirements/build.in
+packaging = "^23.1"
+    # via build
+pyproject-hooks = "^1.0.0"
+    # via build
+
+# ***
+
+# CXREF: ~/.kit/py/click-hotoffthehamster/requirements/docs.txt
+
+[tool.poetry.group.project_docs]
+optional = true
+
+[tool.poetry.group.project_docs.dependencies]
+alabaster = "^0.7.13"
+    # via sphinx
+babel = "^2.12.1"
+    # via sphinx
+certifi = "^2023.7.22"
+    # via requests
+charset-normalizer = "^3.2.0"
+    # via requests
+docutils = "^0.18.1"
+    # via
+    #   sphinx
+    #   sphinx-tabs
+idna = "^3.4"
+    # via requests
+imagesize = "^1.4.1"
+    # via sphinx
+jinja2 = "^3.1.2"
+    # via sphinx
+markupsafe = "^2.1.3"
+    # via jinja2
+packaging = "^23.1"
+    # via
+    #   pallets-sphinx-themes
+    #   sphinx
+pallets-sphinx-themes = "^2.1.1"
+    # via -r requirements/docs.in
+pygments = "^2.16.1"
+    # via
+    #   sphinx
+    #   sphinx-tabs
+requests = "^2.31.0"
+    # via sphinx
+snowballstemmer = "^2.2.0"
+    # via sphinx
+# sphinx = "^7.2.1"
+sphinx = [
+    {version = "^6.2.1", python = "~3.8"},
+    {version = "^7.2.6", python = "^3.9"},
+]
+    # via
+    #   -r requirements/docs.in
+    #   pallets-sphinx-themes
+    #   sphinx-issues
+    #   sphinx-tabs
+    #   sphinxcontrib-applehelp
+    #   sphinxcontrib-devhelp
+    #   sphinxcontrib-htmlhelp
+    #   sphinxcontrib-log-cabinet
+    #   sphinxcontrib-qthelp
+    #   sphinxcontrib-serializinghtml
+sphinx-issues = "^3.0.1"
+    # via -r requirements/docs.in
+sphinx-tabs = "^3.4.1"
+    # via -r requirements/docs.in
+# sphinxcontrib-applehelp = "^1.0.7"
+sphinxcontrib-applehelp = [
+    {version = "==1.0.4", python = "~3.8"},
+    {version = "^1.0.7", python = "^3.9"},
+]
+    # via sphinx
+# sphinxcontrib-devhelp = "^1.0.5"
+sphinxcontrib-devhelp = [
+    {version = "==1.0.2", python = "~3.8"},
+    {version = "^1.0.5", python = "^3.9"},
+]
+    # via sphinx
+# sphinxcontrib-htmlhelp = "^2.0.4"
+sphinxcontrib-htmlhelp = [
+    {version = "==2.0.1", python = "~3.8"},
+    {version = "^2.0.4", python = "^3.9"},
+]
+    # via sphinx
+sphinxcontrib-jsmath = "^1.0.1"
+# sphinxcontrib-jsmath = [
+#     {version = "==1.0.1", python = "~3.8"},
+#     {version = "^1.0.1", python = "^3.9"},
+# ]
+    # via sphinx
+sphinxcontrib-log-cabinet = "^1.0.1"
+# sphinxcontrib-log-cabinet = [
+#     {version = "==1.0.1", python = "~3.8"},
+#     {version = "^1.0.1", python = "^3.9"},
+# ]
+    # via -r requirements/docs.in
+# sphinxcontrib-qthelp = "^1.0.6"
+sphinxcontrib-qthelp = [
+    {version = "==1.0.3", python = "~3.8"},
+    {version = "^1.0.6", python = "^3.9"},
+]
+    # via sphinx
+# sphinxcontrib-serializinghtml = "^1.1.8"
+sphinxcontrib-serializinghtml = [
+    {version = "==1.1.5", python = "~3.8"},
+    {version = "^1.1.8", python = "^3.9"},
+]
+    # via sphinx
+urllib3 = "^2.0.4"
+    # via requests
+
+# ***
+
+# CXREF: ~/.kit/py/click-hotoffthehamster/requirements/tests.txt
+
+[tool.poetry.group.project_test]
+optional = true
+
+[tool.poetry.group.project_test.dependencies]
+iniconfig = "^2.0.0"
+    # via pytest
+packaging = "^23.1"
+    # via pytest
+pluggy = "^1.2.0"
+    # via pytest
+pytest = "^7.4.0"
+    # via -r requirements/tests.in
+
+# ***
+
+# CXREF: ~/.kit/py/click-hotoffthehamster/requirements/typing.txt
+
+[tool.poetry.group.project_typing]
+optional = true
+
+[tool.poetry.group.project_typing.dependencies]
+mypy = "^1.5.1"
+    # via -r requirements/typing.in
+mypy-extensions = "^1.0.0"
+    # via mypy
+nodeenv = "^1.8.0"
+    # via pyright
+pyright = "^1.1.323"
+    # via -r requirements/typing.in
+typing-extensions = "^4.7.1"
+    # via mypy
+
+# ***
+
+# CXREF: ~/.kit/py/click-hotoffthehamster/requirements/dev.txt
+
+[tool.poetry.group.project_dev]
+optional = true
+
+[tool.poetry.group.project_dev.dependencies]
+build = "^0.10.0"
+    # via pip-tools
+cachetools = "^5.3.1"
+    # via tox
+cfgv = "^3.4.0"
+    # via pre-commit
+chardet = "^5.2.0"
+    # via tox
+# DUNNO/2023-11-11 19:18: How does Click have itself as a dependency?!
+#  click = "^8.1.6"
+    # via
+    #   pip-compile-multi
+    #   pip-tools
+colorama = "^0.4.6"
+    # via tox
+distlib = "^0.3.7"
+    # via virtualenv
+filelock = "^3.12.2"
+    # via
+    #   tox
+    #   virtualenv
+identify = "^2.5.26"
+    # via pre-commit
+pip-compile-multi = "^2.6.3"
+    # via -r requirements/dev.in
+pip-tools = "^7.3.0"
+    # via pip-compile-multi
+platformdirs = "^3.10.0"
+    # via
+    #   tox
+    #   virtualenv
+pre-commit = "^3.3.3"
+    # via -r requirements/dev.in
+pyproject-api = "^1.5.4"
+    # via tox
+pyproject-hooks = "^1.0.0"
+    # via build
+pyyaml = "^6.0.1"
+    # via pre-commit
+toposort = "^1.10"
+    # via pip-compile-multi
+tox = "^4.9.0"
+    # via -r requirements/dev.in
+virtualenv = "^20.24.3"
+    # via
+    #   pre-commit
+    #   tox
+wheel = "^0.41.1"
+    # via pip-tools
+
+# ***
+{% endblock -%}
+
+# FIXME/2023-11-12 02:03: Need this for RTD to work (if you care about RTD):
+#
+# [tool.poetry.group.extras.dependencies]
+# ... 
+# pallets-sphinx-themes = "^2.1.1"
+# ... 
+# [tool.poetry.extras]
+# ... 
+# readthedocs = [ "tomli", "sphinx", "pallets-sphinx-themes" ]
