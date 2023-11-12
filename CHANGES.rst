@@ -156,7 +156,7 @@ Released 2022-03-28
     of the other way around. :issue:`1963`
 -   Parameter decorators and ``@group`` handles ``cls=None`` the same as
     not passing ``cls``. ``@option`` handles ``help=None`` the same as
-    not passing ``help``. :issue:`#1959`
+    not passing ``help``. :issue:`1959`
 -   A flag option with ``required=True`` requires that the flag is
     passed instead of choosing the implicit default value. :issue:`1978`
 -   Indentation in help text passed to ``Option`` and ``Command`` is
