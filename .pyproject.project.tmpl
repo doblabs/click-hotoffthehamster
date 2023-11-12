@@ -113,35 +113,36 @@ coc_contact_email = "tallybark+doblabs -at- gmail.com"
 
 {# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #}
 
-{%- block project_dependencies -%}
+{#
+    [tool.poetry.group.project_dist]
+    optional = true
 
-# Re: markers:
-# https://python-poetry.org/docs/dependency-specification/#using-environment-markers
-colorama = { version = '^0.4.6', markers = "sys_platform == 'win32'" }
+    [tool.poetry.group.project_dist.dependencies]
+#}
 
-# ***
-
+{%- block project_dist_dependencies -%}
 # CXREF: ~/.kit/py/click-hotoffthehamster/requirements/build.txt
 
-[tool.poetry.group.project_dist]
-optional = true
-
-[tool.poetry.group.project_dist.dependencies]
 build = "^0.10.0"
     # via -r requirements/build.in
 packaging = "^23.1"
     # via build
 pyproject-hooks = "^1.0.0"
     # via build
+{% endblock -%}
 
 # ***
 
+{#
+    [tool.poetry.group.project_docs]
+    optional = true
+
+    [tool.poetry.group.project_docs.dependencies]
+#}
+
+{%- block project_docs_dependencies -%}
 # CXREF: ~/.kit/py/click-hotoffthehamster/requirements/docs.txt
 
-[tool.poetry.group.project_docs]
-optional = true
-
-[tool.poetry.group.project_docs.dependencies]
 alabaster = "^0.7.13"
     # via sphinx
 babel = "^2.12.1"
@@ -240,15 +241,20 @@ sphinxcontrib-serializinghtml = [
     # via sphinx
 urllib3 = "^2.0.4"
     # via requests
+{% endblock -%}
 
 # ***
 
+{#
+    [tool.poetry.group.project_test]
+    optional = true
+
+    [tool.poetry.group.project_test.dependencies]
+#}
+
+{%- block project_test_dependencies -%}
 # CXREF: ~/.kit/py/click-hotoffthehamster/requirements/tests.txt
 
-[tool.poetry.group.project_test]
-optional = true
-
-[tool.poetry.group.project_test.dependencies]
 iniconfig = "^2.0.0"
     # via pytest
 packaging = "^23.1"
@@ -257,15 +263,17 @@ pluggy = "^1.2.0"
     # via pytest
 pytest = "^7.4.0"
     # via -r requirements/tests.in
+{% endblock -%}
 
 # ***
 
-# CXREF: ~/.kit/py/click-hotoffthehamster/requirements/typing.txt
-
+{%- block project_custom_dependencies -%}
 [tool.poetry.group.project_typing]
 optional = true
 
 [tool.poetry.group.project_typing.dependencies]
+# CXREF: ~/.kit/py/click-hotoffthehamster/requirements/typing.txt
+
 mypy = "^1.5.1"
     # via -r requirements/typing.in
 mypy-extensions = "^1.0.0"
@@ -277,14 +285,12 @@ pyright = "^1.1.323"
 typing-extensions = "^4.7.1"
     # via mypy
 
-# ***
-
-# CXREF: ~/.kit/py/click-hotoffthehamster/requirements/dev.txt
-
 [tool.poetry.group.project_dev]
 optional = true
 
 [tool.poetry.group.project_dev.dependencies]
+# CXREF: ~/.kit/py/click-hotoffthehamster/requirements/dev.txt
+
 build = "^0.10.0"
     # via pip-tools
 cachetools = "^5.3.1"
@@ -334,9 +340,22 @@ virtualenv = "^20.24.3"
     #   tox
 wheel = "^0.41.1"
     # via pip-tools
+{% endblock -%}
 
 # ***
+
+{#
+    [tool.poetry.dependencies]
+ #}
+
+{%- block project_dependencies -%}
+
+# Re: markers:
+# https://python-poetry.org/docs/dependency-specification/#using-environment-markers
+colorama = { version = '^0.4.6', markers = "sys_platform == 'win32'" }
 {% endblock -%}
+
+# ***
 
 # FIXME/2023-11-12 02:03: Need this for RTD to work (if you care about RTD):
 #
