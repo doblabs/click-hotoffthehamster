@@ -828,7 +828,8 @@ class Context:
         from which the value of the parameter was obtained.
 
         :param name: The name of the parameter.
-        :param source: A member of :class:`~click_hotoffthehamster.core.ParameterSource`.
+        :param source: A member of
+                       :class:`~click_hotoffthehamster.core.ParameterSource`.
         """
         self._parameter_source[name] = source
 
@@ -1753,7 +1754,8 @@ class Group(Command):
 
     def collect_usage_pieces(self, ctx: Context) -> list[str]:
         rv = super().collect_usage_pieces(ctx)
-        # LB: FIXME/2023-05-14: Verify this if nec.: *UX: Help: Avoid double-spaces in generated usage string*
+        # LB: FIXME/2023-05-14: Verify this if nec.: *UX: Help: Avoid
+        #                       double-spaces in generated usage string*
         if self.subcommand_metavar:
             rv.append(self.subcommand_metavar)
         return rv

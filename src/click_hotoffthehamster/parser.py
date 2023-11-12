@@ -228,8 +228,8 @@ class _OptionParser:
     implement features that are implemented on a higher level (such as
     types or defaults).
 
-    :param ctx: optionally the :class:`~click_hotoffthehamster.Context` where this parser
-                should go with.
+    :param ctx: optionally the :class:`~click_hotoffthehamster.Context`
+                where this parser should go with.
 
     .. deprecated:: 8.2
         Will be removed in Click 9.0.
