@@ -366,7 +366,7 @@ def open_file(
 ) -> t.IO[t.Any]:
     """Open a file, with extra behavior to handle ``'-'`` to indicate
     a standard stream, lazy open on write, and atomic write. Similar to
-    the behavior of the :class:`~click.File` param type.
+    the behavior of the :class:`~click_hotoffthehamster.File` param type.
 
     If ``'-'`` is given to open ``stdout`` or ``stdin``, the stream is
     wrapped so that using it in a context manager will not close it.
