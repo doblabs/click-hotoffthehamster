@@ -3,10 +3,10 @@ from pallets_sphinx_themes import ProjectLink
 
 # Project --------------------------------------------------------------
 
-project = "Click"
+project = "Click-HotOffTheHamster"
 copyright = "2014 Pallets"
 author = "Pallets"
-release, version = get_version("Click")
+release, version = get_version("Click-HotOffTheHamster")
 
 # General --------------------------------------------------------------
 
@@ -44,9 +44,11 @@ singlehtml_sidebars = {"index": ["project.html", "localtoc.html", "ethicalads.ht
 html_static_path = ["_static"]
 html_favicon = "_static/click-icon.png"
 html_logo = "_static/click-logo-sidebar.png"
-html_title = f"Click Documentation ({version})"
+html_title = f"Click-HotOffTheHamster Documentation ({version})"
 html_show_sourcelink = False
 
 # LaTeX ----------------------------------------------------------------
 
-latex_documents = [(master_doc, f"Click-{version}.tex", html_title, author, "manual")]
+latex_documents = [
+    (master_doc, f"Click-HotOffTheHamster-{version}.tex", html_title, author, "manual")
+]
