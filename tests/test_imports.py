@@ -4,7 +4,6 @@ import sys
 
 from click_hotoffthehamster._compat import WIN
 
-
 IMPORT_TEST = b"""\
 import builtins
 
