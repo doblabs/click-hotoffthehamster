@@ -3,9 +3,15 @@ import pytest
 import click_hotoffthehamster.types
 
 # Common (obj, expect) pairs used to construct multiple tests.
-STRING_PARAM_TYPE = (click_hotoffthehamster.STRING, {"param_type": "String", "name": "text"})
+STRING_PARAM_TYPE = (
+    click_hotoffthehamster.STRING,
+    {"param_type": "String", "name": "text"},
+)
 INT_PARAM_TYPE = (click_hotoffthehamster.INT, {"param_type": "Int", "name": "integer"})
-BOOL_PARAM_TYPE = (click_hotoffthehamster.BOOL, {"param_type": "Bool", "name": "boolean"})
+BOOL_PARAM_TYPE = (
+    click_hotoffthehamster.BOOL,
+    {"param_type": "Bool", "name": "boolean"},
+)
 HELP_OPTION = (
     None,
     {
@@ -135,7 +141,9 @@ HELLO_GROUP = (
             id="IntRange ParamType",
         ),
         pytest.param(
-            click_hotoffthehamster.FLOAT, {"param_type": "Float", "name": "float"}, id="FLOAT ParamType"
+            click_hotoffthehamster.FLOAT,
+            {"param_type": "Float", "name": "float"},
+            id="FLOAT ParamType",
         ),
         pytest.param(
             click_hotoffthehamster.FloatRange(-0.5, 0.5),
@@ -152,7 +160,9 @@ HELLO_GROUP = (
         ),
         pytest.param(*BOOL_PARAM_TYPE, id="Bool ParamType"),
         pytest.param(
-            click_hotoffthehamster.UUID, {"param_type": "UUID", "name": "uuid"}, id="UUID ParamType"
+            click_hotoffthehamster.UUID,
+            {"param_type": "UUID", "name": "uuid"},
+            id="UUID ParamType",
         ),
         pytest.param(
             click_hotoffthehamster.File(),
@@ -174,7 +184,9 @@ HELLO_GROUP = (
             id="Path ParamType",
         ),
         pytest.param(
-            click_hotoffthehamster.Tuple((click_hotoffthehamster.STRING, click_hotoffthehamster.INT)),
+            click_hotoffthehamster.Tuple(
+                (click_hotoffthehamster.STRING, click_hotoffthehamster.INT)
+            ),
             {
                 "param_type": "Tuple",
                 "name": "<text integer>",
@@ -221,7 +233,10 @@ def test_parameter(obj, expect):
         pytest.param(
             click_hotoffthehamster.Group(
                 "base",
-                [click_hotoffthehamster.Command("test", params=[NAME_ARGUMENT[0]]), HELLO_GROUP[0]],
+                [
+                    click_hotoffthehamster.Command("test", params=[NAME_ARGUMENT[0]]),
+                    HELLO_GROUP[0],
+                ],
             ),
             {
                 "name": "base",

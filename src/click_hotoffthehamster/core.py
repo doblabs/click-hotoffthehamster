@@ -258,7 +258,8 @@ class Context:
         Added the ``resilient_parsing``, ``help_option_names``, and
         ``token_normalize_func`` parameters.
     """
-# LB: FIXME/2023-05-14: Confirm: help_option_fallthrough
+
+    # LB: FIXME/2023-05-14: Confirm: help_option_fallthrough
 
     #: The formatter class to create with :meth:`make_formatter`.
     #:
@@ -975,7 +976,9 @@ class Command:
         self.format_usage(ctx, formatter)
         return formatter.getvalue().rstrip("\n")
 
-    def get_params(self, ctx: Context, include_parent_params: bool = False) -> list[Parameter]:
+    def get_params(
+        self, ctx: Context, include_parent_params: bool = False
+    ) -> list[Parameter]:
         rv = self.params
         help_option = self.get_help_option(ctx, include_parent_params)
 
@@ -1011,7 +1014,9 @@ class Command:
             all_names.difference_update(param.secondary_opts)
         return list(all_names)
 
-    def get_help_option(self, ctx: Context, include_parent_params: bool = False) -> Option | None:
+    def get_help_option(
+        self, ctx: Context, include_parent_params: bool = False
+    ) -> Option | None:
         """Returns the help option object."""
         help_options = self.get_help_option_names(ctx)
 

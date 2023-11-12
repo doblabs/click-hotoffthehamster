@@ -351,14 +351,18 @@ def test_global_show_default(runner):
 
 
 def test_formatting_with_options_metavar_empty(runner):
-    cli = click_hotoffthehamster.Command("cli", options_metavar="", params=[click_hotoffthehamster.Argument(["var"])])
+    cli = click_hotoffthehamster.Command(
+        "cli", options_metavar="", params=[click_hotoffthehamster.Argument(["var"])]
+    )
     result = runner.invoke(cli, ["--help"])
     assert "Usage: cli VAR\n" in result.output
 
 
 def test_help_formatter_write_text():
     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit"
-    formatter = click_hotoffthehamster.HelpFormatter(width=len("  Lorem ipsum dolor sit amet,"))
+    formatter = click_hotoffthehamster.HelpFormatter(
+        width=len("  Lorem ipsum dolor sit amet,")
+    )
     formatter.current_indent = 2
     formatter.write_text(text)
     actual = formatter.getvalue()

@@ -106,8 +106,12 @@ def test_filename_formatting():
     assert click_hotoffthehamster.format_filename(b"foo.txt") == "foo.txt"
     assert click_hotoffthehamster.format_filename(b"/x/foo.txt") == "/x/foo.txt"
     assert click_hotoffthehamster.format_filename("/x/foo.txt") == "/x/foo.txt"
-    assert click_hotoffthehamster.format_filename("/x/foo.txt", shorten=True) == "foo.txt"
-    assert click_hotoffthehamster.format_filename(b"/x/\xff.txt", shorten=True) == "�.txt"
+    assert (
+        click_hotoffthehamster.format_filename("/x/foo.txt", shorten=True) == "foo.txt"
+    )
+    assert (
+        click_hotoffthehamster.format_filename(b"/x/\xff.txt", shorten=True) == "�.txt"
+    )
 
 
 def test_prompts(runner):
@@ -152,7 +156,10 @@ def test_prompts(runner):
 
 def test_confirm_repeat(runner):
     cli = click_hotoffthehamster.Command(
-        "cli", params=[click_hotoffthehamster.Option(["--a/--no-a"], default=None, prompt=True)]
+        "cli",
+        params=[
+            click_hotoffthehamster.Option(["--a/--no-a"], default=None, prompt=True)
+        ],
     )
     result = runner.invoke(cli, input="\ny\n")
     assert result.output == "A [y/n]: \nError: invalid input\nA [y/n]: y\n"
@@ -329,7 +336,8 @@ def test_open_file(runner):
 def test_open_file_pathlib_dash(runner):
     @click_hotoffthehamster.command()
     @click_hotoffthehamster.argument(
-        "filename", type=click_hotoffthehamster.Path(allow_dash=True, path_type=pathlib.Path)
+        "filename",
+        type=click_hotoffthehamster.Path(allow_dash=True, path_type=pathlib.Path),
     )
     def cli(filename):
         click_hotoffthehamster.echo(str(type(filename)))
@@ -462,7 +470,10 @@ class MockMain:
     ],
 )
 def test_detect_program_name(path, main, expected):
-    assert click_hotoffthehamster.utils._detect_program_name(path, _main=MockMain(main)) == expected
+    assert (
+        click_hotoffthehamster.utils._detect_program_name(path, _main=MockMain(main))
+        == expected
+    )
 
 
 def test_expand_args(monkeypatch):
@@ -471,10 +482,15 @@ def test_expand_args(monkeypatch):
     monkeypatch.setenv("CLICK_TEST", "hello")
     assert "hello" in click_hotoffthehamster.utils._expand_args(["$CLICK_TEST"])
     assert "pyproject.toml" in click_hotoffthehamster.utils._expand_args(["*.toml"])
-    assert os.path.join("docs", "conf.py") in click_hotoffthehamster.utils._expand_args(["**/conf.py"])
+    assert os.path.join("docs", "conf.py") in click_hotoffthehamster.utils._expand_args(
+        ["**/conf.py"]
+    )
     assert "*.not-found" in click_hotoffthehamster.utils._expand_args(["*.not-found"])
     # a bad glob pattern, such as a pytest identifier, should return itself
-    assert click_hotoffthehamster.utils._expand_args(["test.py::test_bad"])[0] == "test.py::test_bad"
+    assert (
+        click_hotoffthehamster.utils._expand_args(["test.py::test_bad"])[0]
+        == "test.py::test_bad"
+    )
 
 
 @pytest.mark.parametrize(

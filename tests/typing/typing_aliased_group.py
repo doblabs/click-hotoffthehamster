@@ -7,7 +7,9 @@ import click_hotoffthehamster
 
 
 class AliasedGroup(click_hotoffthehamster.Group):
-    def get_command(self, ctx: click_hotoffthehamster.Context, cmd_name: str) -> click_hotoffthehamster.Command | None:
+    def get_command(
+        self, ctx: click_hotoffthehamster.Context, cmd_name: str
+    ) -> click_hotoffthehamster.Command | None:
         rv = click_hotoffthehamster.Group.get_command(self, ctx, cmd_name)
         if rv is not None:
             return rv
