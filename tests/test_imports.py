@@ -15,7 +15,9 @@ import sys
 def tracking_import(module, locals=None, globals=None, fromlist=None,
                     level=0):
     rv = real_import(module, locals, globals, fromlist, level)
-    if globals and globals['__name__'].startswith('click_hotoffthehamster') and level == 0:
+    if globals and globals['__name__'].startswith(
+        'click_hotoffthehamster'
+    ) and level == 0:
         found_imports.add(module)
     return rv
 builtins.__import__ = tracking_import
