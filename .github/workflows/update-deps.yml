@@ -1,0 +1,127 @@
+# vim:tw=0:ts=2:sw=2:et:norl
+# Author: Landon Bouma <https://tallybark.com/>
+# Project: https://github.com/doblabs/easy-as-pypi#🥧
+# License: MIT
+
+---
+
+name: Release Cascade — Update
+
+run-name: 👣 — Cascade — 2.) Update deps ${{
+  github.event_name == 'workflow_dispatch' && '(via User)' || '' }}
+
+on:
+  # Via update-cascade.yml
+  repository_dispatch:
+    types: [update-deps]
+
+  # Via GitHub Actions website button
+  workflow_dispatch:
+    inputs:
+      increment-version:
+        description: 'Increment version'
+        type: boolean
+        default: true
+      cascade-dispatch:
+        description: 'Start the cascade!'
+        type: boolean
+        default: false
+      prerelease:
+        description: 'Pre-release cascade'
+        type: boolean
+        default: false
+        required: false
+
+# ***
+
+env:
+  # USYNC: https://github.com/actions/python-versions/releases
+  # - USYNC: PYTHON_VERSION usage in .github/workflows/*.
+  PYTHON_VERSION: 3.11
+
+jobs:
+  poetry-update:
+    name: Update lock deps
+
+    runs-on: ubuntu-latest
+
+    steps:
+      # SAVVY: How we'd access repository_dispatch args if we needed to add any:
+      #  - run: |
+      #      echo "event.client_payload.sha: ${{ github.event.client_payload.sha }}"
+      #      echo "event.client_payload.ref: ${{ github.event.client_payload.ref }}"
+
+      - name: Checkout this repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          # Use the user token, not ${{ github.token }}, so that
+          # git-push triggers workflow events. (Though TBH I don't
+          # remember if it's the token setting here or the one on
+          # bin/update-poetry, below that does this.)
+          #  token: ${{ github.token }}
+          token: ${{ secrets.USER_PAT }}
+
+      - name: Install poetry
+        run: pipx install poetry
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'poetry'
+
+      - name: Run bin/update-poetry
+        id: run-update-poetry
+        # Run poetry-update.
+        # DEVXX: Set UPDEPS_FAKE_UPDATE=true to fake poetry.lock update,
+        #          e.g., if you're testing inter-workflow flow.
+        run: |
+          export UPDEPS_FAKE_UPDATE=false
+          export UPDEPS_REPO_ORG_PROJ="${{ github.repository }}"
+          export UPDEPS_LABEL_INHIBIT_VERSION="${{ ! inputs.increment-version }}"
+          export UPDEPS_LABEL_INHIBIT_CASCADE="${{ ! inputs.cascade-dispatch }}"
+          export UPDEPS_LABEL_PRERELEASE="${PRERELEASE}"
+
+          env | grep -e "^UPDEPS_"
+
+          new_pr_num="$(./.github/bin/update-poetry)"
+
+          echo "new_pr_num=${new_pr_num}" >> $GITHUB_OUTPUT
+        env:
+          # USER_TOKEN used to call gh-label (manage 'poetry.lock' label).
+          # - USER_TOKEN used on gh-pr-create and gh-pr-merge, and
+          #   GBOT_TOKEN used on gh-pr-review.
+          USER_TOKEN: ${{ secrets.USER_PAT }}
+          GBOT_TOKEN: ${{ github.token }}
+          # Organization variables.
+          UPDEPS_USER_EMAIL: ${{ vars.UPDEPS_USER_EMAIL }}
+          UPDEPS_USER_NAME: ${{ vars.UPDEPS_USER_NAME }}
+          UPDEPS_USER_NAME_UPDEPS: ${{ vars.UPDEPS_USER_NAME_UPDEPS }}
+          # Input value.
+          PRERELEASE: ${{
+            github.event_name == 'workflow_dispatch' && inputs.prerelease
+            || github.event.client_payload.prerelease == 'true' }}
+
+    outputs:
+      new_pr_num: ${{ steps.run-update-poetry.outputs.new_pr_num }}
+
+  # ***
+
+  # If no PR, continue cascade; otherwise update-merged.yml workflow
+  # will continue cascade after PR is merged, and new package version
+  # is released.
+  update-cascade:
+    name: "Cascade maybe"
+
+    uses: ./.github/workflows/update-cascade.yml
+    secrets: inherit
+
+    needs: poetry-update
+
+    if: |
+      needs.poetry-update.result == 'success'
+        && needs.poetry-update.outputs.new_pr_num == ''
+        && (github.event_name != 'workflow_dispatch'
+            || inputs.cascade-dispatch == 'true')

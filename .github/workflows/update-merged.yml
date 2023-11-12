@@ -1,0 +1,262 @@
+# vim:tw=0:ts=2:sw=2:et:norl
+# Author: Landon Bouma <https://tallybark.com/>
+# Project: https://github.com/doblabs/easy-as-pypi#🥧
+# License: MIT
+
+---
+
+name: Release Cascade — Version
+
+run-name: 👣 — Cascade — 3.) Version ${{
+  github.event_name == 'workflow_dispatch' && '(via User)' || '' }}
+
+on:
+
+  # CXREF:
+  # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#
+  #          running-your-pull_request-workflow-when-a-pull-request-merges
+  # - Note pull_request, not pull_request_target, because (don't need/want) permissions.
+  pull_request:
+    types:
+      - closed
+
+  # Via GitHub Actions website button
+  workflow_dispatch:
+    inputs:
+      bump-part:
+        description: 'Bump part'
+        type: choice
+        # It is intentional that this only lets users bump patch or alpha.
+        # It is encouraged that users push tags using `git-bump-version-tag`
+        # from their terminal rather than using this workflow_dispatch.
+        options:
+          - alpha
+          - patch
+          - least
+        default: 'alpha'
+      cascade-dispatch:
+        description: 'Start the cascade!'
+        type: boolean
+        default: false
+        required: false
+
+# ***
+
+# The workflow runs on *all* closed PRs, so we need to filter.
+#
+# - We'll skip the job itself if the PR is obviously inactionable:
+#
+#   - Check that the PR was merged. If not, there's nothing to do.
+#
+#   - Look for the 'poetry.lock' tag, added by .github/bin/update-poetry.
+#
+# - We'll run the job but fail if the tagged and merged PR looks fishy:
+#
+#   - Verify the tag name matches the .github/bin/update-poetry format.
+#     E.g.,
+#
+#       $ jq .event.pull_request.head.ref pull_request.json
+#       "update-deps/202311041112/9f9255a89e96"
+#
+#       $ jq .head_ref pull_request.json
+#       "update-deps/202311041112/9f9255a89e96"
+#
+#     - Where pull_request.json is a local copy of a ${{ github }} dump:
+#
+#       - run: echo "${GITHUB_OBJ}"
+#         env: GITHUB_OBJ: ${{ toJson(github) }}
+#
+# - There are a few more items we could verify, but currently don't:
+#
+#   - Verify it's the same user that update-poetry uses to make the PR.
+#     E.g.,
+#
+#       $ jq .event.pull_request.user.login pull_request.json
+#       "user"
+#
+#       # DUNNO: Are these the workflow actors? Do they always match
+#       #   the PR user? Does the workflow runs as user who committed
+#       #   HEAD? I should read up, and test with separate GH user.
+#       $ jq .actor pull_request.json
+#       "user"
+#       $ jq .triggering_actor pull_request.json
+#       "user"
+#
+#   - Verify the auto-merge properties:
+#
+#       $ jq .event.pull_request.auto_merge.enabled_by.login pull_request.json
+#       "user"
+#
+#       $ jq .event.pull_request.auto_merge.merge_method pull_request.json
+#       "rebase"
+#
+#   - Verify PR title and body
+#
+#       $ jq .event.pull_request.title pull_request.json
+#       "Build: Bump poetry.lock (bump all)"
+#
+#       $ jq .event.pull_request.body pull_request.json
+#       "Cascading release"
+jobs:
+
+  verify-merged-pr:
+
+    # USYNC: UPDEPS_LABEL_NAME_POETRY_LOCK="poetry.lock"
+    if: github.event_name != 'workflow_dispatch'
+      && github.event.pull_request.merged == true
+      && contains(github.event.pull_request.labels.*.name, 'poetry.lock')
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - run: echo "The PR was merged, and it's labeled 'poetry.lock'"
+
+      # Verify tag name looks like one of ours.
+      - name: Verify tag name format — “${{ github.head_ref }}”
+        run: |
+          echo "${HEAD_REF}" | grep -E -e "^update-deps/[0-9]{12}/[0-9a-f]{12}$"
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+
+      # The verify-merged-pr steps are designed to exit nonzero to fail,
+      # and then the next, bump job will check verify-merged-pr.result.
+
+  # ***
+
+  wrangle-ci-tags:
+    name: Wrangle CI tags
+
+    # Note that inhibit-cascade only applies if version/release not inhibited.
+    # - USYNC: UPDEPS_LABEL_NAME_INHIBIT_VERSION="ci-inhibit-version"
+    #   USYNC: UPDEPS_LABEL_NAME_INHIBIT_CASCADE="ci-inhibit-cascade"
+    if: (github.event_name == 'workflow_dispatch' && ! inputs.cascade-dispatch)
+      || (contains(github.event.pull_request.labels.*.name, 'poetry.lock')
+        && ! contains(github.event.pull_request.labels.*.name, 'ci-inhibit-version')
+        && contains(github.event.pull_request.labels.*.name, 'ci-inhibit-cascade')
+      )
+
+    uses: ./.github/workflows/ci-tags-wrangle.yml
+
+    with:
+      inhibit-cascade: true
+
+  # ***
+
+  bump-version-maybe:
+
+    runs-on: ubuntu-latest
+
+    needs: [verify-merged-pr, wrangle-ci-tags]
+
+    # USYNC: UPDEPS_LABEL_NAME_INHIBIT_VERSION="ci-inhibit-version"
+    if: ${{ ! cancelled()
+      && (needs.wrangle-ci-tags.result == 'success'
+          || needs.wrangle-ci-tags.result == 'skipped')
+      && (github.event_name == 'workflow_dispatch'
+          || needs.verify-merged-pr.result == 'success'
+         )
+      && ! contains(
+        github.event.pull_request.labels.*.name, 'ci-inhibit-version'
+      ) }}
+
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v4
+        with:
+          # Fetch all history, so rev-parse HEAD is real HEAD,
+          # and we get tag history, so git-bump can read version.
+          fetch-depth: 0
+          # Use user token, not default github.token, so git-push tag
+          # triggers release workflow.
+          token: ${{ secrets.USER_PAT }}
+          # By default, checkout installs within ${{ github.workspace }},
+          # i.e., it won't checkout to a new directory, it'll just occupy
+          # the workspace, e.g., '/home/runner/work/easy-as-pypi/easy-as-pypi'.
+          # - And then if you run checkout again without a 'path', it clobbers
+          #   the same location. So we need to use 'path' to use checkout twice.
+          # - Here we install project repo to "${{ github.workspace }}/versionee",
+          #   e.g., '/home/runner/work/easy-as-pypi/easy-as-pypi/versionee'.
+          # - Not that you need to know all that, just that the repo will be in the
+          #   root workspace dir at versionee/ and git-bump will be at versioner/.
+          path: 'versionee'
+
+      # ***
+
+      - name: Checkout git-bump
+        uses: actions/checkout@v4
+        with:
+          repository: 'landonb/git-bump-version-tag'
+          # INERT: Pin the version. But we own the tool, so trust in HEAD.
+          #  ref: ''
+          # Relative path under $GITHUB_WORKSPACE to place the repository.
+          path: 'versioner'
+
+      - name: Install Dunamai
+        run: pipx install dunamai
+
+      - name: Prepare committer
+        run: |
+          assert_git_email_known_ci () {
+            test -n "${UPDEPS_USER_EMAIL}" \
+              && return 0 || true
+
+            >&2 echo "ERROR: Please set UPDEPS_USER_EMAIL " \
+              "organization or project variable"
+
+            exit 1
+          }
+          assert_git_email_known_ci
+
+          cd ./versionee/
+          git config user.email "${UPDEPS_USER_EMAIL}"
+          git config user.name \
+            "${UPDEPS_USER_NAME_VERSION:-${UPDEPS_USER_NAME:-release-bot}}"
+        env:
+          UPDEPS_USER_EMAIL: ${{ vars.UPDEPS_USER_EMAIL }}
+          UPDEPS_USER_NAME: ${{ vars.UPDEPS_USER_NAME }}
+          UPDEPS_USER_NAME_VERSION: ${{ vars.UPDEPS_USER_NAME_VERSION }}
+
+      - name: Bump it...
+        run: |
+          export PATH="$(pwd)/versioner/bin:${PATH}"
+          cd ./versionee/
+          # By default, runs:
+          #  git bump-version-tag least
+          echo "git bump-version-tag \"${BUMP_PART}\""
+          git bump-version-tag "${BUMP_PART}"
+        env:
+          # Uses bump-part input if workflow_dispatch;
+          # or looks for special CI label if pull_request;
+          # finally falls-back 'least' (which is bump's default).
+          # - SAVVY: If you start a normal version release cascade but then
+          #   reach a project on pre-release, this bump, because 'least',
+          #   will maintain that pre-release. And then on the next cascade
+          #   dispatch, the prerelease will propagate to the next repo.
+          #   Which seems like a good thing: If one project in the chain
+          #   is on pre-release, then everything downstream should also
+          #   be considered alpha. Alternatively, if the cascade didn't turn
+          #   prerelease on, the prerelease project wouldn't get updated
+          #   in downstream projects, but maybe upstreamer projects would.
+          #   So perhaps it'd be fine to not propagate prerelease when
+          #   encountered along the cascade -- but the CI isn't quite
+          #   plumbed for that case. Rather than update-cascade.yml use
+          #   the PRERELEASE flag passed around (based off the current
+          #   version tag), update-merged.yml would have to add a
+          #   'ci-prerelease' or 'ci-prerelease-cascade' tag to the repo,
+          #   based on the 'ci-prelease' PR label that update-deps.yml
+          #   added (based on the PRERELEASE input from update-cascade.yml).
+          #   Then update-cascade would have to read that tag.
+          #   - TL;DR: If you don't want one prerelease project to make the
+          #     rest of the cascade prerelease versions, you need to add a
+          #     new 'ci-prerelease' tag to ci-tags-wrangle.yml that will be
+          #     set in update-merged.yml (based on same-named PR label),
+          #     and that will be read in update-cascade.yml (and dispatch
+          #     to next repo's update-deps.yml).
+          #     - DEBAR: Do not change from Normal to Prerelease cascade
+          #              when cascade reaches a Prerelease project.
+          # USYNC: UPDEPS_LABEL_NAME_PRERELEASE="ci-prerelease"
+          BUMP_PART: ${{
+            inputs.bump-part
+            || (contains(github.event.pull_request.labels.*.name, 'ci-prerelease')
+                && 'alpha')
+            || 'least' }}
