@@ -1,16 +1,13 @@
 import pytest
 
 import click_hotoffthehamster.shell_completion
-from click_hotoffthehamster.core import Argument
-from click_hotoffthehamster.core import Command
-from click_hotoffthehamster.core import Group
-from click_hotoffthehamster.core import Option
-from click_hotoffthehamster.shell_completion import add_completion_class
-from click_hotoffthehamster.shell_completion import CompletionItem
-from click_hotoffthehamster.shell_completion import ShellComplete
-from click_hotoffthehamster.types import Choice
-from click_hotoffthehamster.types import File
-from click_hotoffthehamster.types import Path
+from click_hotoffthehamster.core import Argument, Command, Group, Option
+from click_hotoffthehamster.shell_completion import (
+    CompletionItem,
+    ShellComplete,
+    add_completion_class,
+)
+from click_hotoffthehamster.types import Choice, File, Path
 
 
 def _get_completions(cli, args, incomplete):
