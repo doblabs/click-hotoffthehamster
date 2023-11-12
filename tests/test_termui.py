@@ -292,7 +292,9 @@ def test_progressbar_item_show_func(runner, monkeypatch):
 
     @click_hotoffthehamster.command()
     def cli():
-        with click_hotoffthehamster.progressbar(range(3), item_show_func=lambda x: str(x)) as progress:
+        with click_hotoffthehamster.progressbar(
+            range(3), item_show_func=lambda x: str(x)
+        ) as progress:
             for item in progress:
                 click_hotoffthehamster.echo(f" item {item}")
 
@@ -395,7 +397,9 @@ def test_fast_edit(runner):
 )
 def test_prompt_required_with_required(runner, prompt_required, required, args, expect):
     @click_hotoffthehamster.command()
-    @click_hotoffthehamster.option("-v", prompt=True, prompt_required=prompt_required, required=required)
+    @click_hotoffthehamster.option(
+        "-v", prompt=True, prompt_required=prompt_required, required=required
+    )
     def cli(v):
         click_hotoffthehamster.echo(str(v))
 

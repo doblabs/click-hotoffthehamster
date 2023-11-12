@@ -169,7 +169,10 @@ def test_make_pass_meta_decorator(runner):
 
 def test_make_pass_meta_decorator_doc():
     pass_value = pass_meta_key("value")
-    assert "the 'value' key from :attr:`click_hotoffthehamster.Context.meta`" in pass_value.__doc__
+    assert (
+        "the 'value' key from :attr:`click_hotoffthehamster.Context.meta`"
+        in pass_value.__doc__
+    )
     pass_value = pass_meta_key("value", doc_description="the test value")
     assert "passes the test value" in pass_value.__doc__
 
@@ -296,7 +299,9 @@ def test_propagate_show_default_setting(runner):
     """
     group = click_hotoffthehamster.Group(
         commands={
-            "sub": click_hotoffthehamster.Command("sub", params=[click_hotoffthehamster.Option(["-a"], default="a")]),
+            "sub": click_hotoffthehamster.Command(
+                "sub", params=[click_hotoffthehamster.Option(["-a"], default="a")]
+            ),
         },
         context_settings={"show_default": True},
     )
@@ -370,6 +375,8 @@ def test_parameter_source(runner, option_args, invoke_args, expect):
 def test_propagate_opt_prefixes():
     parent = click_hotoffthehamster.Context(click_hotoffthehamster.Command("test"))
     parent._opt_prefixes = {"-", "--", "!"}
-    ctx = click_hotoffthehamster.Context(click_hotoffthehamster.Command("test2"), parent=parent)
+    ctx = click_hotoffthehamster.Context(
+        click_hotoffthehamster.Command("test2"), parent=parent
+    )
 
     assert ctx._opt_prefixes == {"-", "--", "!"}

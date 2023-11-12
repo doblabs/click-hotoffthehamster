@@ -58,7 +58,10 @@ def test_context_formatter_class():
         formatter_class = CustomFormatter
 
     context = CustomContext(
-        click_hotoffthehamster.Command("test", params=[click_hotoffthehamster.Option(["--value"])]), color=True
+        click_hotoffthehamster.Command(
+            "test", params=[click_hotoffthehamster.Option(["--value"])]
+        ),
+        color=True,
     )
     assert "\x1b[33mOptions\x1b[0m:" in context.get_help()
 

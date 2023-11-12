@@ -393,7 +393,9 @@ def test_choice_option(runner):
 
 def test_choice_argument(runner):
     @click_hotoffthehamster.command()
-    @click_hotoffthehamster.argument("method", type=click_hotoffthehamster.Choice(["foo", "bar", "baz"]))
+    @click_hotoffthehamster.argument(
+        "method", type=click_hotoffthehamster.Choice(["foo", "bar", "baz"])
+    )
     def cli(method):
         click_hotoffthehamster.echo(method)
 

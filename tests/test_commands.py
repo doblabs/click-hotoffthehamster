@@ -228,7 +228,9 @@ def test_object_propagation(runner):
         @cli.command()
         @click_hotoffthehamster.pass_context
         def sync(ctx):
-            click_hotoffthehamster.echo(f"Debug is {'on' if ctx.obj['DEBUG'] else 'off'}")
+            click_hotoffthehamster.echo(
+                f"Debug is {'on' if ctx.obj['DEBUG'] else 'off'}"
+            )
 
         result = runner.invoke(cli, ["sync"])
         assert result.exception is None
@@ -300,7 +302,9 @@ def test_aliased_command_canonical_name(runner):
 
 def test_group_add_command_name(runner):
     cli = click_hotoffthehamster.Group("cli")
-    cmd = click_hotoffthehamster.Command("a", params=[click_hotoffthehamster.Option(["-x"], required=True)])
+    cmd = click_hotoffthehamster.Command(
+        "a", params=[click_hotoffthehamster.Option(["-x"], required=True)]
+    )
     cli.add_command(cmd, "b")
     # Check that the command is accessed through the registered name,
     # not the original name.

@@ -99,7 +99,11 @@ def test_unknown_options(runner, unknown_flag):
 )
 def test_suggest_possible_options(runner, value, expect):
     cli = click_hotoffthehamster.Command(
-        "cli", params=[click_hotoffthehamster.Option(["--bound"]), click_hotoffthehamster.Option(["--count"])]
+        "cli",
+        params=[
+            click_hotoffthehamster.Option(["--bound"]),
+            click_hotoffthehamster.Option(["--count"]),
+        ],
     )
     result = runner.invoke(cli, [value])
     assert expect in result.output
@@ -136,7 +140,9 @@ def test_multiple_required(runner):
     ],
 )
 def test_init_good_default_list(runner, multiple, nargs, default):
-    click_hotoffthehamster.Option(["-a"], multiple=multiple, nargs=nargs, default=default)
+    click_hotoffthehamster.Option(
+        ["-a"], multiple=multiple, nargs=nargs, default=default
+    )
 
 
 @pytest.mark.parametrize(
@@ -152,7 +158,9 @@ def test_init_bad_default_list(runner, multiple, nargs, default):
     type = (str, str) if nargs == 2 else None
 
     with pytest.raises(ValueError, match="default"):
-        click_hotoffthehamster.Option(["-a"], type=type, multiple=multiple, nargs=nargs, default=default)
+        click_hotoffthehamster.Option(
+            ["-a"], type=type, multiple=multiple, nargs=nargs, default=default
+        )
 
 
 @pytest.mark.parametrize("env_key", ["MYPATH", "AUTO_MYPATH"])
@@ -333,13 +341,18 @@ def test_dynamic_default_help_special_method(runner):
     ("type", "expect"),
     [
         (click_hotoffthehamster.IntRange(1, 32), "1<=x<=32"),
-        (click_hotoffthehamster.IntRange(1, 32, min_open=True, max_open=True), "1<x<32"),
+        (
+            click_hotoffthehamster.IntRange(1, 32, min_open=True, max_open=True),
+            "1<x<32",
+        ),
         (click_hotoffthehamster.IntRange(1), "x>=1"),
         (click_hotoffthehamster.IntRange(max=32), "x<=32"),
     ],
 )
 def test_intrange_default_help_text(type, expect):
-    option = click_hotoffthehamster.Option(["--num"], type=type, show_default=True, default=2)
+    option = click_hotoffthehamster.Option(
+        ["--num"], type=type, show_default=True, default=2
+    )
     context = click_hotoffthehamster.Context(click_hotoffthehamster.Command("test"))
     result = option.get_help_record(context)[1]
     assert expect in result
@@ -361,7 +374,10 @@ def test_file_type_help_default():
     getting the default value.
     """
     option = click_hotoffthehamster.Option(
-        ["--in"], type=click_hotoffthehamster.File(), default=__file__, show_default=True
+        ["--in"],
+        type=click_hotoffthehamster.File(),
+        default=__file__,
+        show_default=True,
     )
     context = click_hotoffthehamster.Context(click_hotoffthehamster.Command("test"))
     result = option.get_help_record(context)[1]
@@ -517,7 +533,10 @@ def test_missing_option_string_cast():
 
 def test_missing_required_flag(runner):
     cli = click_hotoffthehamster.Command(
-        "cli", params=[click_hotoffthehamster.Option(["--on/--off"], is_flag=True, required=True)]
+        "cli",
+        params=[
+            click_hotoffthehamster.Option(["--on/--off"], is_flag=True, required=True)
+        ],
     )
     result = runner.invoke(cli)
     assert result.exit_code == 2
@@ -826,7 +845,9 @@ def test_do_not_show_default_empty_multiple():
     """When show_default is True and multiple=True is set, it should not
     print empty default value in --help output.
     """
-    opt = click_hotoffthehamster.Option(["-a"], multiple=True, help="values", show_default=True)
+    opt = click_hotoffthehamster.Option(
+        ["-a"], multiple=True, help="values", show_default=True
+    )
     ctx = click_hotoffthehamster.Context(click_hotoffthehamster.Command("cli"))
     message = opt.get_help_record(ctx)[1]
     assert message == "values"
@@ -848,8 +869,12 @@ def test_do_not_show_default_empty_multiple():
     ],
 )
 def test_show_default_precedence(ctx_value, opt_value, expect):
-    ctx = click_hotoffthehamster.Context(click_hotoffthehamster.Command("test"), show_default=ctx_value)
-    opt = click_hotoffthehamster.Option("-a", default=1, help="value", show_default=opt_value)
+    ctx = click_hotoffthehamster.Context(
+        click_hotoffthehamster.Command("test"), show_default=ctx_value
+    )
+    opt = click_hotoffthehamster.Option(
+        "-a", default=1, help="value", show_default=opt_value
+    )
     help = opt.get_help_record(ctx)[1]
     assert ("default:" in help) is expect
 
@@ -889,7 +914,9 @@ def test_multiple_option_with_optional_value(runner):
     cli = click_hotoffthehamster.Command(
         "cli",
         params=[
-            click_hotoffthehamster.Option(["-f"], is_flag=False, flag_value="flag", multiple=True),
+            click_hotoffthehamster.Option(
+                ["-f"], is_flag=False, flag_value="flag", multiple=True
+            ),
             click_hotoffthehamster.Option(["-a"]),
             click_hotoffthehamster.Argument(["b"], nargs=-1),
         ],

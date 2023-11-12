@@ -6,7 +6,9 @@ import click_hotoffthehamster
 
 @click_hotoffthehamster.command()
 @click_hotoffthehamster.option("--count", default=1, help="Number of greetings.")
-@click_hotoffthehamster.option("--name", prompt="Your name", help="The person to greet.")
+@click_hotoffthehamster.option(
+    "--name", prompt="Your name", help="The person to greet."
+)
 def hello(count: int, name: str) -> None:
     """Simple program that greets NAME for a total of COUNT times."""
     for _ in range(count):

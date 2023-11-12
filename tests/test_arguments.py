@@ -126,7 +126,9 @@ def test_file_args(runner):
 
 def test_path_allow_dash(runner):
     @click_hotoffthehamster.command()
-    @click_hotoffthehamster.argument("input", type=click_hotoffthehamster.Path(allow_dash=True))
+    @click_hotoffthehamster.argument(
+        "input", type=click_hotoffthehamster.Path(allow_dash=True)
+    )
     def foo(input):
         click_hotoffthehamster.echo(input)
 

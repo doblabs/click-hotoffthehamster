@@ -291,7 +291,8 @@ def test_completion_item_data():
 @pytest.fixture()
 def _patch_for_completion(monkeypatch):
     monkeypatch.setattr(
-        "click_hotoffthehamster.shell_completion.BashComplete._check_version", lambda self: True
+        "click_hotoffthehamster.shell_completion.BashComplete._check_version",
+        lambda self: True,
     )
 
 
@@ -348,11 +349,15 @@ def test_choice_case_sensitive(value, expect):
 
 @pytest.fixture()
 def _restore_available_shells(tmpdir):
-    prev_available_shells = click_hotoffthehamster.shell_completion._available_shells.copy()
+    prev_available_shells = (
+        click_hotoffthehamster.shell_completion._available_shells.copy()
+    )
     click_hotoffthehamster.shell_completion._available_shells.clear()
     yield
     click_hotoffthehamster.shell_completion._available_shells.clear()
-    click_hotoffthehamster.shell_completion._available_shells.update(prev_available_shells)
+    click_hotoffthehamster.shell_completion._available_shells.update(
+        prev_available_shells
+    )
 
 
 @pytest.mark.usefixtures("_restore_available_shells")
@@ -372,7 +377,10 @@ def test_add_completion_class():
 
     # Now, "mysh" is finally in available shells
     assert "mysh" in click_hotoffthehamster.shell_completion._available_shells
-    assert click_hotoffthehamster.shell_completion._available_shells["mysh"] is MyshComplete
+    assert (
+        click_hotoffthehamster.shell_completion._available_shells["mysh"]
+        is MyshComplete
+    )
 
 
 @pytest.mark.usefixtures("_restore_available_shells")
@@ -398,7 +406,10 @@ def test_add_completion_class_with_name():
     # Now, "mysh" is finally in available shells
     assert "mysh" in click_hotoffthehamster.shell_completion._available_shells
     assert "not_mysh" not in click_hotoffthehamster.shell_completion._available_shells
-    assert click_hotoffthehamster.shell_completion._available_shells["mysh"] is MyshComplete
+    assert (
+        click_hotoffthehamster.shell_completion._available_shells["mysh"]
+        is MyshComplete
+    )
 
 
 @pytest.mark.usefixtures("_restore_available_shells")
@@ -413,4 +424,7 @@ def test_add_completion_class_decorator():
 
     # Using `add_completion_class` as a decorator adds the new shell immediately
     assert "mysh" in click_hotoffthehamster.shell_completion._available_shells
-    assert click_hotoffthehamster.shell_completion._available_shells["mysh"] is MyshComplete
+    assert (
+        click_hotoffthehamster.shell_completion._available_shells["mysh"]
+        is MyshComplete
+    )

@@ -289,14 +289,14 @@ class HelpFormatter:
                 for line in lines[1:]:
                     self.write(f"{'':>{first_col + self.current_indent}}{line}\n")
 
-# FIXME/2023-05-14 16:58: Verify this:
-                # (lb): I think the help looks weird with blank lines in the
-                # options list, so I'm disabling this behavior that mainline
-                # Click performs.
-                #
-                #   if len(lines) > 1:
-                #       # separate long help from next option
-                #       self.write("\n")
+            # FIXME/2023-05-14 16:58: Verify this:
+            # (lb): I think the help looks weird with blank lines in the
+            # options list, so I'm disabling this behavior that mainline
+            # Click performs.
+            #
+            #   if len(lines) > 1:
+            #       # separate long help from next option
+            #       self.write("\n")
             else:
                 self.write("\n")
 
