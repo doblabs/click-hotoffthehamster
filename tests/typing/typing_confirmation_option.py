@@ -5,7 +5,9 @@ import click_hotoffthehamster
 
 
 @click_hotoffthehamster.command()
-@click_hotoffthehamster.confirmation_option(prompt="Are you sure you want to drop the db?")
+@click_hotoffthehamster.confirmation_option(
+    prompt="Are you sure you want to drop the db?"
+)
 def dropdb() -> None:
     click_hotoffthehamster.echo("Dropped all tables!")
 

@@ -77,7 +77,9 @@ def test_cast_multi_default(runner, nargs, multiple, default, expect):
     if nargs == -1:
         param = click_hotoffthehamster.Argument(["a"], nargs=nargs, default=default)
     else:
-        param = click_hotoffthehamster.Option(["-a"], nargs=nargs, multiple=multiple, default=default)
+        param = click_hotoffthehamster.Option(
+            ["-a"], nargs=nargs, multiple=multiple, default=default
+        )
 
     cli = click_hotoffthehamster.Command("cli", params=[param], callback=lambda a: a)
     result = runner.invoke(cli, standalone_mode=False)
@@ -97,7 +99,11 @@ def test_cast_multi_default(runner, nargs, multiple, default, expect):
 def test_path_type(runner, cls, expect):
     cli = click_hotoffthehamster.Command(
         "cli",
-        params=[click_hotoffthehamster.Argument(["p"], type=click_hotoffthehamster.Path(path_type=cls))],
+        params=[
+            click_hotoffthehamster.Argument(
+                ["p"], type=click_hotoffthehamster.Path(path_type=cls)
+            )
+        ],
         callback=lambda p: p,
     )
     result = runner.invoke(cli, ["a/b/c.txt"], standalone_mode=False)
@@ -106,7 +112,9 @@ def test_path_type(runner, cls, expect):
 
 
 def _symlinks_supported():
-    with tempfile.TemporaryDirectory(prefix="click_hotoffthehamster-pytest-") as tempdir:
+    with tempfile.TemporaryDirectory(
+        prefix="click_hotoffthehamster-pytest-"
+    ) as tempdir:
         target = os.path.join(tempdir, "target")
         open(target, "w").close()
         link = os.path.join(tempdir, "link")
@@ -128,7 +136,9 @@ def test_path_resolve_symlink(tmp_path, runner):
 
     path_type = click_hotoffthehamster.Path(resolve_path=True)
     param = click_hotoffthehamster.Argument(["a"], type=path_type)
-    ctx = click_hotoffthehamster.Context(click_hotoffthehamster.Command("cli", params=[param]))
+    ctx = click_hotoffthehamster.Context(
+        click_hotoffthehamster.Command("cli", params=[param])
+    )
 
     test_dir = tmp_path / "dir"
     test_dir.mkdir()
@@ -145,7 +155,9 @@ def test_path_resolve_symlink(tmp_path, runner):
 
 
 def _non_utf8_filenames_supported():
-    with tempfile.TemporaryDirectory(prefix="click_hotoffthehamster-pytest-") as tempdir:
+    with tempfile.TemporaryDirectory(
+        prefix="click_hotoffthehamster-pytest-"
+    ) as tempdir:
         try:
             f = open(os.path.join(tempdir, "\udcff"), "w")
         except OSError:
@@ -193,21 +205,27 @@ def test_path_surrogates(tmp_path, monkeypatch):
     path.touch()
     type = click_hotoffthehamster.Path(readable=True)
 
-    with pytest.raises(click_hotoffthehamster.BadParameter, match="'�' is not readable"):
+    with pytest.raises(
+        click_hotoffthehamster.BadParameter, match="'�' is not readable"
+    ):
         with monkeypatch.context() as m:
             m.setattr(os, "access", no_access)
             type.convert(path, None, None)
 
     type = click_hotoffthehamster.Path(readable=False, writable=True)
 
-    with pytest.raises(click_hotoffthehamster.BadParameter, match="'�' is not writable"):
+    with pytest.raises(
+        click_hotoffthehamster.BadParameter, match="'�' is not writable"
+    ):
         with monkeypatch.context() as m:
             m.setattr(os, "access", no_access)
             type.convert(path, None, None)
 
     type = click_hotoffthehamster.Path(readable=False, executable=True)
 
-    with pytest.raises(click_hotoffthehamster.BadParameter, match="'�' is not executable"):
+    with pytest.raises(
+        click_hotoffthehamster.BadParameter, match="'�' is not executable"
+    ):
         with monkeypatch.context() as m:
             m.setattr(os, "access", no_access)
             type.convert(path, None, None)
@@ -225,7 +243,9 @@ def test_path_surrogates(tmp_path, monkeypatch):
 def test_file_surrogates(type, tmp_path):
     path = tmp_path / "\udcff"
 
-    with pytest.raises(click_hotoffthehamster.BadParameter, match="�': No such file or directory"):
+    with pytest.raises(
+        click_hotoffthehamster.BadParameter, match="�': No such file or directory"
+    ):
         type.convert(path, None, None)
 
 

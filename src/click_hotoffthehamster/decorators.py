@@ -146,7 +146,9 @@ def pass_meta_key(
         return update_wrapper(new_func, f)
 
     if doc_description is None:
-        doc_description = f"the {key!r} key from :attr:`click_hotoffthehamster.Context.meta`"
+        doc_description = (
+            f"the {key!r} key from :attr:`click_hotoffthehamster.Context.meta`"
+        )
 
     decorator.__doc__ = (
         f"Decorator that passes {doc_description} as the first argument"
