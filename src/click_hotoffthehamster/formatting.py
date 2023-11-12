@@ -34,7 +34,7 @@ def wrap_text(
     initial_indent: str = "",
     subsequent_indent: str = "",
     preserve_paragraphs: bool = False,
-    cls: class = None,
+    cls: type = None,
 ) -> str:
     """A helper function that intelligently wraps text.  By default, it
     assumes that it operates on a single paragraph of text but if the
@@ -154,7 +154,7 @@ class HelpFormatter:
         prog: str,
         args: str = "",
         prefix: str | None = None,
-        cls: class | None = None,
+        cls: type | None = None,
         alt_fmt: bool = False,
     ) -> None:
         """Writes a usage line into the buffer.
