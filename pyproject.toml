@@ -23,6 +23,8 @@ Changes = "https://click.palletsprojects.com/changes/"
 "Source Code" = "https://github.com/pallets/click/"
 "Issue Tracker" = "https://github.com/pallets/click/issues/"
 Chat = "https://discord.gg/pallets"
+# For update-faithful-file file rendering:
+repository = "https://github.com/doblabs/click-hotoffthehamster#🪝"
 
 [tool.flit.module]
 name = "click_hotoffthehamster"
@@ -68,8 +70,14 @@ ignore_missing_imports = true
 
 # ***
 
+[tool.easy_as_pypi]
+author = "Armin Ronacher <armin.ronacher@active-4.com>"
+copy_years_owner = "2014-2023 Armin Ronacher"
+coc_contact_email = "tallybark+doblabs -at- gmail.com"
+
 # SAVVY/2023-11-11: Upstream Click uses Flit:
 #   https://flit.pypa.io/en/stable/
+
 [build-system]
 requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning"]
 build-backend = "poetry_dynamic_versioning.backend"
