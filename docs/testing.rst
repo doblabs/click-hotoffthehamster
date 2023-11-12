@@ -44,7 +44,8 @@ data, exit code, and optional exception attached:
      assert result.exit_code == 0
      assert result.output == 'Hello Peter!\n'
 
-For subcommand testing, a subcommand name must be specified in the `args` parameter of :meth:`CliRunner.invoke` method:
+For subcommand testing, a subcommand name must be specified in the `args`
+parameter of :meth:`CliRunner.invoke` method:
 
 .. code-block:: python
    :caption: sync.py
@@ -73,8 +74,11 @@ For subcommand testing, a subcommand name must be specified in the `args` parame
      assert 'Debug mode is on' in result.output
      assert 'Syncing' in result.output
 
-Additional keyword arguments passed to ``.invoke()`` will be used to construct the initial Context object.
-For example, if you want to run your tests against a fixed terminal width you can use the following::
+Additional keyword arguments passed to ``.invoke()`` will be used to construct
+the initial Context object.
+
+For example, if you want to run your tests against a fixed terminal width you
+can use the following::
 
     runner = CliRunner()
     result = runner.invoke(cli, ['--debug', 'sync'], terminal_width=60)
