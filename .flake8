@@ -22,4 +22,4 @@ extend-ignore =
 max-line-length = 80
 per-file-ignores =
     # __init__ exports names
-    src/click/__init__.py: F401
+    src/click_hotoffthehamster/__init__.py: F401
