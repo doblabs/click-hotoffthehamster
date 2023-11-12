@@ -1,10 +1,11 @@
 ---
 
-name: Publish
+name: Click/Pallets — Publish
 on:
-  push:
-    tags:
-      - '*'
+  # push:
+  #   tags:
+  #     - '*'
+  workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-latest
