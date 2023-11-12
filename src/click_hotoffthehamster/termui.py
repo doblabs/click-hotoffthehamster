@@ -482,6 +482,7 @@ def style(
 
     Examples::
 
+        # noqa: E501
         click_hotoffthehamster.echo(click_hotoffthehamster.style('Hello World!', fg='green'))
         click_hotoffthehamster.echo(click_hotoffthehamster.style('ATTENTION!', blink=True))
         click_hotoffthehamster.echo(click_hotoffthehamster.style('Some things', reverse=True, fg='cyan'))
@@ -613,6 +614,7 @@ def secho(
     """This function combines :func:`echo` and :func:`style` into one
     call.  As such the following two calls are the same::
 
+        # noqa: E501
         click_hotoffthehamster.secho('Hello World!', fg='green')
         click_hotoffthehamster.echo(click_hotoffthehamster.style('Hello World!', fg='green'))
 
