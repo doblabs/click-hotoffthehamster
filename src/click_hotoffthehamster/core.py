@@ -134,7 +134,7 @@ class ParameterSource(enum.Enum):
     """This is an :class:`~enum.Enum` that indicates the source of a
     parameter's value.
 
-    Use :meth:`click.Context.get_parameter_source` to get the
+    Use :meth:`click_hotoffthehamster.Context.get_parameter_source` to get the
     source for a parameter by name.
 
     .. versionchanged:: 8.0
@@ -556,7 +556,7 @@ class Context:
         return self._meta
 
     def make_formatter(self) -> HelpFormatter:
-        """Creates the :class:`~click.HelpFormatter` for the help and
+        """Creates the :class:`~click_hotoffthehamster.HelpFormatter` for the help and
         usage output.
 
         To quickly customize the formatter class used without overriding
@@ -585,9 +585,9 @@ class Context:
 
         .. code-block:: python
 
-            @click.group()
-            @click.option("--name")
-            @click.pass_context
+            @click_hotoffthehamster.group()
+            @click_hotoffthehamster.option("--name")
+            @click_hotoffthehamster.pass_context
             def cli(ctx):
                 ctx.obj = ctx.with_resource(connect_db(name))
 
@@ -827,7 +827,7 @@ class Context:
         from which the value of the parameter was obtained.
 
         :param name: The name of the parameter.
-        :param source: A member of :class:`~click.core.ParameterSource`.
+        :param source: A member of :class:`~click_hotoffthehamster.core.ParameterSource`.
         """
         self._parameter_source[name] = source
 
@@ -837,7 +837,7 @@ class Context:
 
         This can be useful for determining when a user specified a value
         on the command line that is the same as the default value. It
-        will be :attr:`~click.core.ParameterSource.DEFAULT` only if the
+        will be :attr:`~click_hotoffthehamster.core.ParameterSource.DEFAULT` only if the
         value was actually taken from the default.
 
         :param name: The name of the parameter.
@@ -1244,7 +1244,7 @@ class Command:
 
         .. versionadded:: 8.0
         """
-        from click.shell_completion import CompletionItem
+        from click_hotoffthehamster.shell_completion import CompletionItem
 
         results: list[CompletionItem] = []
 
@@ -1711,8 +1711,8 @@ class Group(Command):
 
         Example::
 
-            @click.group()
-            @click.option('-i', '--input', default=23)
+            @click_hotoffthehamster.group()
+            @click_hotoffthehamster.option('-i', '--input', default=23)
             def cli(input):
                 return 42
 
@@ -1925,7 +1925,7 @@ class Group(Command):
 
         .. versionadded:: 8.0
         """
-        from click.shell_completion import CompletionItem
+        from click_hotoffthehamster.shell_completion import CompletionItem
 
         results = [
             CompletionItem(name, help=command.get_short_help_str(ctx))
@@ -2047,7 +2047,7 @@ class Parameter:
     :param shell_complete: A function that returns custom shell
         completions. Used instead of the param's type completion if
         given. Takes ``ctx, param, incomplete`` and must return a list
-        of :class:`~click.shell_completion.CompletionItem` or a list of
+        of :class:`~click_hotoffthehamster.shell_completion.CompletionItem` or a list of
         strings.
 
     .. versionchanged:: 8.0
@@ -2174,7 +2174,7 @@ class Parameter:
         """Gather information that could be useful for a tool generating
         user-facing documentation.
 
-        Use :meth:`click.Context.to_info_dict` to traverse the entire
+        Use :meth:`click_hotoffthehamster.Context.to_info_dict` to traverse the entire
         CLI structure.
 
         .. versionadded:: 8.0
@@ -2429,7 +2429,7 @@ class Parameter:
         """Return a list of completions for the incomplete value. If a
         ``shell_complete`` function was given during init, it is used.
         Otherwise, the :attr:`type`
-        :meth:`~click.types.ParamType.shell_complete` function is used.
+        :meth:`~click_hotoffthehamster.types.ParamType.shell_complete` function is used.
 
         :param ctx: Invocation context for this command.
         :param incomplete: Value being completed. May be empty.
@@ -2440,7 +2440,7 @@ class Parameter:
             results = self._custom_shell_complete(ctx, self, incomplete)
 
             if results and isinstance(results[0], str):
-                from click.shell_completion import CompletionItem
+                from click_hotoffthehamster.shell_completion import CompletionItem
 
                 results = [CompletionItem(c) for c in results]
 

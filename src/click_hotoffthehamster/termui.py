@@ -345,7 +345,7 @@ def progressbar(
     together with ``item_show_func`` to customize the output for each
     manual step::
 
-        with click.progressbar(
+        with click_hotoffthehamster.progressbar(
             length=total_size,
             label='Unzipping archive',
             item_show_func=lambda a: a.filename
@@ -482,10 +482,10 @@ def style(
 
     Examples::
 
-        click.echo(click.style('Hello World!', fg='green'))
-        click.echo(click.style('ATTENTION!', blink=True))
-        click.echo(click.style('Some things', reverse=True, fg='cyan'))
-        click.echo(click.style('More colors', fg=(255, 12, 128), bg=117))
+        click_hotoffthehamster.echo(click_hotoffthehamster.style('Hello World!', fg='green'))
+        click_hotoffthehamster.echo(click_hotoffthehamster.style('ATTENTION!', blink=True))
+        click_hotoffthehamster.echo(click_hotoffthehamster.style('Some things', reverse=True, fg='cyan'))
+        click_hotoffthehamster.echo(click_hotoffthehamster.style('More colors', fg=(255, 12, 128), bg=117))
 
     Supported color names:
 
@@ -613,8 +613,8 @@ def secho(
     """This function combines :func:`echo` and :func:`style` into one
     call.  As such the following two calls are the same::
 
-        click.secho('Hello World!', fg='green')
-        click.echo(click.style('Hello World!', fg='green'))
+        click_hotoffthehamster.secho('Hello World!', fg='green')
+        click_hotoffthehamster.echo(click_hotoffthehamster.style('Hello World!', fg='green'))
 
     All keyword arguments are forwarded to the underlying functions
     depending on which one they go with.
@@ -691,8 +691,8 @@ def launch(url: str, wait: bool = False, locate: bool = False) -> int:
 
     Examples::
 
-        click.launch('https://click.palletsprojects.com/')
-        click.launch('/my/downloaded/file', locate=True)
+        click_hotoffthehamster.launch('https://click.palletsprojects.com/')
+        click_hotoffthehamster.launch('/my/downloaded/file', locate=True)
 
     .. versionadded:: 2.0
 

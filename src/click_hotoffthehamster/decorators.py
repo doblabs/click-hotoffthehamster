@@ -126,7 +126,7 @@ def pass_meta_key(
     key: str, *, doc_description: str | None = None
 ) -> t.Callable[[t.Callable[te.Concatenate[T, P], R]], t.Callable[P, R]]:
     """Create a decorator that passes a key from
-    :attr:`click.Context.meta` as the first argument to the decorated
+    :attr:`click_hotoffthehamster.Context.meta` as the first argument to the decorated
     function.
 
     :param key: Key in ``Context.meta`` to pass.
@@ -146,7 +146,7 @@ def pass_meta_key(
         return update_wrapper(new_func, f)
 
     if doc_description is None:
-        doc_description = f"the {key!r} key from :attr:`click.Context.meta`"
+        doc_description = f"the {key!r} key from :attr:`click_hotoffthehamster.Context.meta`"
 
     decorator.__doc__ = (
         f"Decorator that passes {doc_description} as the first argument"
