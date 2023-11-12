@@ -1,0 +1,23 @@
+# vim:tw=0:ts=2:sw=2:noet:ft=make:
+# Author: Landon Bouma <https://tallybark.com/>
+# Project: file:///kit#🔪
+# License: PROPRIETARY AND CONFIDENTIAL.
+# Infuses: https://github.com/doblabs/click-hotoffthehamster
+
+# Override EAPP's Makefile to inject our own poetry-install-with's.
+
+PO_INSTALL_WITH_EAPP = dist,i18n,lint,test,docstyle,docs,extras
+
+# OMITD: project_dist
+PO_INSTALL_WITH_PROJ = project_docs,project_test,project_typing,project_dev
+
+develop: editables editable
+	@. "$(MAKETASKS_SH)" && \
+		\
+    PO_INSTALL_WITH="--with $(PO_INSTALL_WITH_EAPP),$(PO_INSTALL_WITH_PROJ)" \
+		\
+		make_develop "$(VENV_NAME)" "$(VENV_PYVER)" "$(VENV_ARGS)" "$(EDITABLE_DIR)"
+	@echo
+	@echo "$(VENV_NAME) is ready — if \`workon\` is installed, run that"
+.PHONY: develop
+
