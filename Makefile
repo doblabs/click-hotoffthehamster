@@ -31,8 +31,8 @@ EDITABLE_DIR ?= .pyproject-editable
 # Local "editable" virtualenv directory (`make develop`).
 VENV_NAME ?= .venv-$(PACKAGE_NAME)
 
-# The "editable" virtualenv Python version (`make develop`).
-# - USYNC: Keep current with tox.ini's `basepython`.
+# USYNC: workflows/ (PYTHON_VERSION), tox.ini (basepython), Makefile (VENV_PYVER).
+# - The "editable" virtualenv Python version (`make develop`).
 VENV_PYVER ?= 3.11
 
 # Additional `python -m venv` options.
@@ -517,16 +517,17 @@ _warn_unless_virtualenvwrapper:
 #	    but that's some spectacular magic:
 #	      sed 's/^ \+\([0-9]\+\.[0-9]\+\.\([0-9]\+\)\)/\2 \1/'
 
-# USYNC: Keep synced with tox.ini [testenv:py*] jobs.
+# USYNC: checks.yml (python-version), tox.ini (envlist), Makefile (pyenv-install-pys).
 # - -s: --skip-existing
 pyenv-install-pys:
 	@pyenv install -s 3.8
 	@pyenv install -s 3.9
 	@pyenv install -s 3.10
 	@pyenv install -s 3.11
+	@pyenv install -s 3.12
 	@# Pre-release Python only installable by full version.
-	@# This installs the non-dev version, e.g., '3.12.0a5', not '3.12-dev'.
-	@pyenv install -s $$(pyenv install -l | grep '^ \+3\.12\.' | tail -1)
+	@# This installs the non-dev version, e.g., '3.13.0a1', not '3.13-dev'.
+	@pyenv install -s $$(pyenv install -l | grep '^ \+3\.13\.' | tail -1)
 .PHONY: pyenv-install-pys
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #

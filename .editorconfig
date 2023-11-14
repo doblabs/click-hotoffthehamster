@@ -11,6 +11,10 @@
 #
 #        Step 3: Profit.
 
+# REFER:
+#
+#   https://github.com/editorconfig/editorconfig/wiki/EditorConfig-Properties
+
 root = true
 
 [*]
@@ -27,12 +31,14 @@ max_line_length = 88
 indent_style = tab
 end_of_line = crlf
 
-[*.rst]
-indent_style = space
-indent_size = 3
-insert_final_newline = true
+[*.md]
+indent_size = 2
 trim_trailing_whitespace = true
-charset = utf-8
+max_line_length = off
+
+[*.rst]
+indent_size = 3
+trim_trailing_whitespace = true
 max_line_length = off
 
 [*.sh]
