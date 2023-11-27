@@ -5,49 +5,95 @@
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-UPDEPS_LABEL_NAME_POETRY_LOCK="${UPDEPS_LABEL_NAME_POETRY_LOCK:-\
-poetry.lock}"
-UPDEPS_LABEL_DESC_POETRY_LOCK="${UPDEPS_LABEL_DESC_POETRY_LOCK:-\
-Pull requests that update poetry.lock}"
-UPDEPS_LABEL_NAME_INHIBIT_VERSION="${UPDEPS_LABEL_NAME_INHIBIT_VERSION:-\
-ci-inhibit-version}"
-UPDEPS_LABEL_DESC_INHIBIT_VERSION="${UPDEPS_LABEL_DESC_INHIBIT_VERSION:-\
-Tells CI not to version after auto-merge}"
-UPDEPS_LABEL_NAME_INHIBIT_CASCADE="${UPDEPS_LABEL_NAME_INHIBIT_CASCADE:-\
-ci-inhibit-cascade}"
-UPDEPS_LABEL_DESC_INHIBIT_CASCADE="${UPDEPS_LABEL_DESC_INHIBIT_CASCADE:-\
-Tells CI not to cascade after release}"
-UPDEPS_LABEL_NAME_PRERELEASE="${UPDEPS_LABEL_NAME_PRERELEASE:-\
-ci-prerelease}"
-UPDEPS_LABEL_DESC_PRERELEASE="${UPDEPS_LABEL_DESC_PRERELEASE:-\
-Tells CI to use prerelease versions}"
-UPDEPS_LABELS_COLOR="${UPDEPS_LABELS_COLOR:-74e34f}"
-
 # CXREF: These are GH organization variables that GHA injects into env:
 #   https://github.com/organizations/doblabs/settings/variables/actions
 # - If you're running locally, git-config values will be used instead.
 UPDEPS_USER_EMAIL="${UPDEPS_USER_EMAIL}"
 UPDEPS_USER_NAME="${UPDEPS_USER_NAME_UPDEPS:-${UPDEPS_USER_NAME:-update-poetry}}"
 
-# Optional: Customizable Git and GitHub message.
-UPDEPS_COMMIT_MESSAGE="${UPDEPS_COMMIT_MESSAGE:-\
-Build: Deps: Update poetry.lock [update-deps cascade]}"
-UPDEPS_PR_TITLE="${UPDEPS_PR_TITLE:-Build: Bump poetry.lock (bump all)}"
-UPDEPS_PR_BODY="${UPDEPS_PR_BODY:-Cascading release}"
-
 # The UPDEPS_REPO_ORG_PROJ environ will be inferred at runtime.
 # - You can also set from workflow, e.g.,
 #     UPDEPS_REPO_ORG_PROJ="${{ github.repository }}" ./.github/bin/update-poetry
 UPDEPS_REPO_ORG_PROJ="${UPDEPS_REPO_ORG_PROJ}"
 
-# DEVXX: How you might test locally (but note PR self-approve fails):
+# Cascade options.
+UPDEPS_LABEL_INHIBIT_CASCADE="${UPDEPS_LABEL_INHIBIT_CASCADE:-false}"
+UPDEPS_LABEL_VERSIONING_PART="${UPDEPS_LABEL_VERSIONING_PART:-alpha}"
+
+# Optional: Set faker true to skip poetry-update (useful for developing).
+UPDEPS_FAKE_UPDATE="${UPDEPS_FAKE_UPDATE:-false}"
+
+# ***
+
+# DEVXX: Use this (or similar) to test locally (but note PR self-approve fails
+#        unless you set USER_TOKEN and GBOT_TOKEN to different users' tokens):
 __UPDEPS__CPYST__="
   UPDEPS_FAKE_UPDATE=true \
-  UPDEPS_LABEL_INHIBIT_VERSION=true \
   UPDEPS_LABEL_INHIBIT_CASCADE=true \
-  UPDEPS_LABEL_PRERELEASE=true \
+  UPDEPS_LABEL_VERSIONING_PART=skip \
     ./.github/bin/update-poetry
 "
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+# Optional: Customizable PR label names and descriptions.
+
+# The update-merged.yml workflow use the 'poetry.lock' label to "verify"
+# the PR was created by this script. (Though, as with any PR label or Gi
+# t tag the CI uses, any user could apply the same tag/label to trick us,
+# but we assume no such chicanery.)
+UPDEPS_LABEL_NAME_POETRY_LOCK="${UPDEPS_LABEL_NAME_POETRY_LOCK:-\
+poetry.lock}"
+UPDEPS_LABEL_DESC_POETRY_LOCK="${UPDEPS_LABEL_DESC_POETRY_LOCK:-\
+Pull requests that update poetry.lock}"
+
+# The 'ci-inhibit-cascade' label, if set, tells update-cascade.yml
+# to not send the repo-dispatch downstream.
+UPDEPS_LABEL_NAME_INHIBIT_CASCADE="${UPDEPS_LABEL_NAME_INHIBIT_CASCADE:-\
+ci-inhibit-cascade}"
+UPDEPS_LABEL_DESC_INHIBIT_CASCADE="${UPDEPS_LABEL_DESC_INHIBIT_CASCADE:-\
+Tells CI not to cascade after release}"
+
+# The next 4 labels represent the 'cascade-versioning' Git tag.
+# - An annotated Git tag contains a message we kluge to hold our
+#   variable value.
+#   - So we can use the same Git tag for different values.
+# - But a GitHub PR label is just a label, essentially a boolean.
+#   So we use 4 labels here to represent the 4 'cascade-versioning'
+#   values: 'alpha', 'patch', 'least', and 'skip'.
+#
+UPDEPS_LABEL_NAME_VERSION_ALPHA="${UPDEPS_LABEL_NAME_VERSION_ALPHA:-\
+ci-version-alpha}"
+UPDEPS_LABEL_DESC_VERSION_ALPHA="${UPDEPS_LABEL_DESC_VERSION_ALPHA:-\
+Tells CI to bump alpha version}"
+#
+UPDEPS_LABEL_NAME_VERSION_PATCH="${UPDEPS_LABEL_NAME_VERSION_PATCH:-\
+ci-version-patch}"
+UPDEPS_LABEL_DESC_VERSION_PATCH="${UPDEPS_LABEL_DESC_VERSION_PATCH:-\
+Tells CI to bump patch version}"
+#
+UPDEPS_LABEL_NAME_VERSION_LEAST="${UPDEPS_LABEL_NAME_VERSION_LEAST:-\
+ci-version-least}"
+UPDEPS_LABEL_DESC_VERSION_LEAST="${UPDEPS_LABEL_DESC_VERSION_LEAST:-\
+Tells CI to bump least version}"
+#
+UPDEPS_LABEL_NAME_VERSION_SKIP="${UPDEPS_LABEL_NAME_VERSION_SKIP:-\
+ci-version-skip}"
+UPDEPS_LABEL_DESC_VERSION_SKIP="${UPDEPS_LABEL_DESC_VERSION_SKIP:-\
+Tells CI to skip version bump}"
+
+# ***
+
+# Optional: Customizable PR label color (same color used for all).
+UPDEPS_LABELS_COLOR="${UPDEPS_LABELS_COLOR:-74e34f}"
+
+# ***
+
+# Optional: Customizable Git and GitHub message.
+UPDEPS_COMMIT_MESSAGE="${UPDEPS_COMMIT_MESSAGE:-\
+Build: Deps: Update poetry.lock [update-deps cascade]}"
+UPDEPS_PR_TITLE="${UPDEPS_PR_TITLE:-Build: Bump poetry.lock (bump all)}"
+UPDEPS_PR_BODY="${UPDEPS_PR_BODY:-Cascading release}"
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
@@ -97,7 +143,7 @@ update_poetry_update () {
   assert_git_email_known
 
   local branch_name
-  branch_name="$(print_branch_name)"
+  branch_name="$(generate_branch_name)"
 
   local remote_name
   remote_name="$(git_upstream_remote)"
@@ -109,7 +155,7 @@ update_poetry_update () {
   assert_git_status_only_poetry_lock_changed_if_any
 
   if test -n "$(git status --porcelain=v1)"; then
-    prepare_branch "${branch_name}" "${remote_name}"
+    prepare_branch "${branch_name}"
 
     poetry_update_commit_changes "${branch_name}"
 
@@ -161,7 +207,7 @@ git_HEAD_commit_sha () {
   git rev-parse HEAD
 }
 
-print_branch_name () {
+generate_branch_name () {
   branch_name="update-deps/$(TTTtt0)/$(shorten_string "$(git_HEAD_commit_sha)")"
 
   printf "%s" "${branch_name}"
@@ -169,7 +215,6 @@ print_branch_name () {
 
 prepare_branch () {
   local branch_name="$1"
-  local remote_name="$2"
 
   local scoped_head="HEAD"
   scoped_head="$(print_scoped_head ".")"
@@ -411,14 +456,6 @@ gh_label_create () {
 
 # Meh: This feels like TMBL — Too Much Business Logic — than maybe belongs here.
 print_pr_ci_labels () {
-  if ${UPDEPS_LABEL_INHIBIT_VERSION:-false}; then
-    gh_label_create \
-      "${UPDEPS_LABEL_NAME_INHIBIT_VERSION}" \
-      "${UPDEPS_LABEL_DESC_INHIBIT_VERSION}"
-
-    printf "%s" "--label ${UPDEPS_LABEL_NAME_INHIBIT_VERSION} "
-  fi
-
   if ${UPDEPS_LABEL_INHIBIT_CASCADE:-false}; then
     gh_label_create \
       "${UPDEPS_LABEL_NAME_INHIBIT_CASCADE}" \
@@ -427,12 +464,30 @@ print_pr_ci_labels () {
     printf "%s" "--label ${UPDEPS_LABEL_NAME_INHIBIT_CASCADE} "
   fi
 
-  if ${UPDEPS_LABEL_PRERELEASE:-false}; then
+  if [ "${UPDEPS_LABEL_VERSIONING_PART}" = "least" ]; then
     gh_label_create \
-      "${UPDEPS_LABEL_NAME_PRERELEASE}" \
-      "${UPDEPS_LABEL_DESC_PRERELEASE}"
+      "${UPDEPS_LABEL_NAME_VERSION_LEAST}" \
+      "${UPDEPS_LABEL_DESC_VERSION_LEAST}"
 
-    printf "%s" "--label ${UPDEPS_LABEL_NAME_PRERELEASE} "
+    printf "%s" "--label ${UPDEPS_LABEL_NAME_VERSION_LEAST} "
+  elif [ "${UPDEPS_LABEL_VERSIONING_PART}" = "alpha" ]; then
+    gh_label_create \
+      "${UPDEPS_LABEL_NAME_VERSION_ALPHA}" \
+      "${UPDEPS_LABEL_DESC_VERSION_ALPHA}"
+
+    printf "%s" "--label ${UPDEPS_LABEL_NAME_VERSION_ALPHA} "
+  elif [ "${UPDEPS_LABEL_VERSIONING_PART}" = "patch" ]; then
+    gh_label_create \
+      "${UPDEPS_LABEL_NAME_VERSION_PATCH}" \
+      "${UPDEPS_LABEL_DESC_VERSION_PATCH}"
+
+    printf "%s" "--label ${UPDEPS_LABEL_NAME_VERSION_PATCH} "
+  elif [ "${UPDEPS_LABEL_VERSIONING_PART}" = "skip" ]; then
+    gh_label_create \
+      "${UPDEPS_LABEL_NAME_VERSION_SKIP}" \
+      "${UPDEPS_LABEL_DESC_VERSION_SKIP}"
+
+    printf "%s" "--label ${UPDEPS_LABEL_NAME_VERSION_SKIP} "
   fi
 }
 

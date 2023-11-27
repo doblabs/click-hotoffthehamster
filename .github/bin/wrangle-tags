@@ -1,0 +1,388 @@
+#!/usr/bin/env bash
+# vim:tw=0:ts=2:sw=2:et:norl:nospell:ft=sh
+# Project: https://github.com/doblabs/easy-as-pypi#🥧
+# License: MIT
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+# CPYST: Wired into GHA CI, but callable from developer term, too:
+__USAGE__="
+  GITHUB_OUTPUT="$(mktemp -t wrangle-tags-XXXXX)" ./.github/bin/wrangle-tags
+
+  EAPP_INHIBIT_CASCADE=true \
+  EAPP_INHIBIT_FOREVER='' \
+  EAPP_CASCADE_UPDATEDEPS='' \
+  EAPP_CASCADE_VERSIONING='' \
+  GITHUB_OUTPUT="$(mktemp -t wrangle-tags-XXXXX)" \
+    ./.github/bin/wrangle-tags
+
+  EAPP_INHIBIT_CASCADE=true \
+  EAPP_INHIBIT_FOREVER='' \
+  EAPP_CASCADE_UPDATEDEPS='' \
+  EAPP_CASCADE_VERSIONING='' \
+  GITHUB_OUTPUT="$(mktemp -t wrangle-tags-XXXXX)" \
+    ~/.kit/py/easy-as-pypi/.github/bin/wrangle-tags
+"
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+# USYNC: See ./.github/bin/update-poetry, which uses similarly-
+#        named GitHub PR labels for the same Git tags named here.
+#
+#        - We use Git tags to message across the release process,
+#          between the PyPI release workflow, and the smoke test.
+#
+#        - We use GitHub PR labels to message across the poetry-
+#          update process.
+#
+#        In both instances, the workflow effectively ends before resuming
+#        again after some event happens. And we cannot use GHA workflow
+#        artifacts, which only persist throughout a single workflow, to
+#        communicate between workflows.
+#
+#        So these mechanisms (PR labels, and Git tags), seem like the
+#        (only) obvious choice to handle end-to-end workflow settings.
+#
+#        - And there's no reason the Git tags and the GH labels have
+#          to be named the same, except they represent the same value
+#          we want to carry through the cascade workflows.
+#
+#        - Also note that annotated tags can be used to store values,
+#          whereas GH PR labels are simple booleans (is it set or not?).
+#          - So some vars (specifically, ci-cascade-versioning), can be
+#            represented by a single Git tag, but must be represented by
+#            multiple PR labels, one for each possible value.
+
+EAPP_CI_TAG_INHIBIT_CASCADE="ci-inhibit-cascade"
+EAPP_CI_TAG_INHIBIT_FOREVER="ci-inhibit-forever"
+EAPP_CI_TAG_CASCADE_UPDATEDEPS="ci-cascade-updatedeps"
+EAPP_CI_TAG_CASCADE_VERSIONING="ci-cascade-versioning"
+
+# REFER: See ./.github/workflows/ci-tags-wrangle.yml for the 
+#        environs this script uses as runtime args. They all
+#        default to the empty string:
+#
+#           EAPP_INHIBIT_CASCADE: ${{ inputs.inhibit-cascade }}
+#           EAPP_INHIBIT_FOREVER: ${{ inputs.inhibit-forever }}
+#           EAPP_CASCADE_UPDATEDEPS: ${{ inputs.cascade-updatedeps }}
+#           EAPP_CASCADE_VERSIONING: ${{ inputs.cascade-versioning }}
+#
+#        The corresponding delete tags each default false:
+#
+#           EAPP_DELETE_INHIBIT_CASCADE: ${{ inputs.delete-inhibit-cascade }}
+#           EAPP_DELETE_INHIBIT_FOREVER: ${{ inputs.delete-inhibit-forever }}
+#           EAPP_DELETE_CASCADE_UPDATEDEPS: ${{ inputs.delete-cascade-updatedeps }}
+#           EAPP_DELETE_CASCADE_VERSIONING: ${{ inputs.delete-cascade-versioning }}
+
+# Optional special keyword, e.g., "FALSE", you could use to delete
+# tags, vs. using the EAPP_DELETE_* environs.
+EAPP_CI_DELETE_KEYWORD="${EAPP_CI_DELETE_KEYWORD}"
+
+# The git-push remote, only used if $CI, so should always be 'origin'.
+EAPP_CI_REMOTE_NAME="${EAPP_CI_REMOTE_NAME:-origin}"
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+wrangle_tags () {
+  declare -a tag_names
+  # CRUDE: Set tag_names array.
+  set_tag_locals ""
+
+  trace_full
+
+  trace_lite "┌─ CI Wrangler: tag-name: ────┬─🥚─┬─ new-val: ─┬─ output-name and val: ────────────┐"
+
+  for which_tag in "${tag_names[@]}"; do
+    trace_full "which tag: ${which_tag}"
+
+    local tag_name
+    local out_name
+    local tag_scope
+    local default_value
+    local new_tag_value
+    local delete_if
+    local skip_if
+    # CRUDE: Set `local` vars for specified tag.
+    set_tag_locals "${which_tag}"
+
+    wrangle_tag \
+      "${tag_name}" \
+      "${out_name}" \
+      "${tag_scope}" \
+      "${default_value}" \
+      "${new_tag_value}" \
+      "${delete_if}" \
+      "${skip_if}"
+
+    trace_full
+  done
+
+  local footer_rhs="─────────────────────────────┴────┴────────────┴───────────────────────────────────┘"
+
+  if [ -n "${GITHUB_OUTPUT}" ]; then
+    trace_lite "├${footer_rhs}"
+    trace_lite "└→ GITHUB_OUTPUT:"
+    trace_lite "$(cat "${GITHUB_OUTPUT}" | sed 's/^/    /')"
+  else
+    trace_lite "└${footer_rhs}"
+  fi
+}
+
+# ***
+
+wrangle_tag () {
+  local tag_name="$1"
+  local out_name="$2"
+  local tag_scope="$3"
+  local default_value="$4"
+  local new_tag_value="$5"
+  local delete_if="$6"
+  local skip_if="$7"
+
+  trace_full "manage-ci-tag @ $(git rev-parse HEAD)"
+  trace_full "- tag_name: ${tag_name}"
+  trace_full "- out_name: ${out_name}"
+  trace_full "- tag_scope: ${tag_scope}"
+  trace_full "- default_value: ${default_value}"
+  trace_full "- new_tag_value: ${new_tag_value}"
+  trace_full "- delete_if: ${delete_if}"
+  trace_full "- skip_if?: ${skip_if}"
+
+  # ***
+
+  if ${skip_if}; then
+    return 0
+  fi
+
+  # ***
+
+  local tag_exists=false
+
+  if [ "${tag_scope}" = "HEAD" ]; then
+    # A "HEAD" tag is only valid if on HEAD commit.
+    # - This branch followed by all tags but 'ci-inhibit-forever'.
+    local head_tag_match="$(git tag --list --points-at HEAD "${tag_name}")"
+
+    if [ -n "${head_tag_match}" ]; then
+      tag_exists=true
+    fi
+  else
+    # A "branch" tag is valid if it's on any commit in the branch.
+    # - This code path followed by only the 'ci-inhibit-forever'
+    #   tag (for now, says 2023-11-22).
+
+    # Use not-fully-qualified branch name because refs/heads/<branch> doesn't
+    # work with git-branch (so not `git rev-parse --symbolic-full-name HEAD`).
+    local default_branch="$(git rev-parse --abbrev-ref=loose HEAD)"
+
+    # - The name pattern — ${default_branch} — is ^strict$ w/out wildcards.
+    # - If tag absent, dies: 'error: malformed object name refs/tags/foo'.
+    local branch_tag_match
+    if branch_tag_match="$(
+      git branch --list --contains "refs/tags/${tag_name}" "${default_branch}" \
+        2> /dev/null
+    )"; then
+
+      if [ -n "${branch_tag_match}" ]; then
+        tag_exists=true
+      fi
+    fi
+  fi
+
+  # ***
+
+  local old_tag_value=""
+
+  if ${tag_exists}; then
+    old_tag_value="$(git tag --list --format='%(contents:subject)' "${tag_name}")"
+  else
+    old_tag_value="${default_value}"
+  fi
+
+  # ***
+
+  if [ -n "${EAPP_CI_DELETE_KEYWORD}" ] \
+    && [ "${new_tag_value}" = "${EAPP_CI_DELETE_KEYWORD}" ] \
+    || ${delete_if} \
+  ; then
+    # Only need to delete branch tag if tag_exists,
+    # because otherwise already doesn't exist.
+    # - But always delete HEAD-only tag, in
+    #   case stale one persists elsewhere.
+    if ${tag_exists} || [ "${tag_scope}" = "HEAD" ]; then
+      git tag -d "${tag_name}" 2> /dev/null || true
+
+      if ${CI:-false}; then
+        git push "${EAPP_CI_REMOTE_NAME}" ":refs/tags/${tag_name}"
+      fi
+    fi
+  elif [ -n "${new_tag_value}" ]; then
+    # Create tag if new value not non-empty and not "false".
+    if ! ${tag_exists}; then
+      git tag -f -a "${tag_name}" -m "${new_tag_value}"
+
+      if ${CI:-false}; then
+        git push -f "${EAPP_CI_REMOTE_NAME}" "refs/tags/${tag_name}"
+      fi
+    fi
+  fi
+
+  # ***
+
+  trace_full "${out_name}: ${old_tag_value}"
+
+  trace_lite \
+    "├── $(printf '%-25s' "${tag_name}")" \
+    "│  $(${tag_exists} && echo ✓ || echo ✗)" \
+    "│ $(printf '%+10s' "${new_tag_value}")" \
+    "│ $(printf '%-27s' "${out_name}:") $(printf '%-5s' "${old_tag_value}") │"
+
+  if [ -n "${GITHUB_OUTPUT}" ]; then
+    # Aka `if ${CI:-false}; then`.
+    echo "${out_name}=${old_tag_value}" >> "${GITHUB_OUTPUT}"
+  fi
+}
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+# (lb): These functions act in lieu of Bash (or shell) having any
+# sort of object support, and are used to iterate over a list of
+# object values, setting the same local variables with different
+# values each time they're called.
+# - This feels like an abuse of variable scoping (most languages
+#   don't expose a called function's variables or values to the
+#   caller, but the shell does), but I couldn't think of anything
+#   DRYer, or simpler to implement. So like sorry not sorry?
+
+set_tag_locals () {
+  local which_tag="$1"
+
+  # These fcns rely on `local` scoping to set these vars for the caller:
+  #   tag_name, out_name, tag_scope, new_tag_value, skip_if
+
+  # SAVVY: Nothing sets skip_if=true
+  # - But it's available for future generations.
+  skip_if=false
+
+  set_tag_locals_inhibit_cascade
+
+  set_tag_locals_inhibit_forever
+
+  set_tag_locals_cascade_updatedeps
+
+  set_tag_locals_cascade_versioning
+
+  # ***
+
+  tag_name="${which_tag}"
+}
+
+is_this_tag_object_specified () {
+  local which_tag="$1"
+  local tag_name="$2"
+  # Caller local: tag_names
+
+  trace_full "which_tag: ${which_tag}"
+  trace_full "tag_name: ${tag_name}"
+
+  # At first, caller leaves which_tag unset,
+  # and we procure a list of all tag names.
+  [ -n "${which_tag}" ] || tag_names+=("${tag_name}")
+
+  # Then, caller iterates over the list of
+  # tag names, and we set the `local` vars
+  # for that tag.
+  [ -n "${which_tag}" ] && [ "${which_tag}" = "${tag_name}" ]
+}
+
+# ***
+
+set_tag_locals_inhibit_cascade () {
+  # E.g., "ci-inhibit-cascade"
+  tag_name="${EAPP_CI_TAG_INHIBIT_CASCADE}"
+  if is_this_tag_object_specified "${which_tag}" "${tag_name}"; then
+    out_name="old_inhibit_cascade"
+    tag_scope="HEAD"
+    default_value="false"
+    new_tag_value="${EAPP_INHIBIT_CASCADE}"
+    delete_if=${EAPP_DELETE_INHIBIT_CASCADE:-false}
+  fi
+}
+
+set_tag_locals_inhibit_forever () {
+  # E.g., "ci-inhibit-forever"
+  tag_name="${EAPP_CI_TAG_INHIBIT_FOREVER}"
+  if is_this_tag_object_specified "${which_tag}" "${tag_name}"; then
+    out_name="old_inhibit_forever"
+    tag_scope="branch"
+    default_value="false"
+    new_tag_value="${EAPP_INHIBIT_FOREVER}"
+    delete_if=${EAPP_DELETE_INHIBIT_FOREVER:-false}
+  fi
+}
+
+set_tag_locals_cascade_updatedeps () {
+  # E.g., "ci-cascade-updatedeps"
+  tag_name="${EAPP_CI_TAG_CASCADE_UPDATEDEPS}"
+  if is_this_tag_object_specified "${which_tag}" "${tag_name}"; then
+    out_name="old_cascade_updatedeps"
+    tag_scope="HEAD"
+    default_value="true"
+    new_tag_value="${EAPP_CASCADE_UPDATEDEPS}"
+    delete_if=${EAPP_DELETE_CASCADE_UPDATEDEPS:-false}
+  fi
+}
+
+# EAPP_CASCADE_VERSIONING is:
+# - 'least', 'alpha', 'patch', or 'skip'; or,
+#   as applies to all tags: '' to just read
+#   the tag (and not create or delete it),
+#   or 'false' to remove the tag.
+set_tag_locals_cascade_versioning () {
+  # E.g., "ci-cascade-versioning"
+  tag_name="${EAPP_CI_TAG_CASCADE_VERSIONING}"
+  if is_this_tag_object_specified "${which_tag}" "${tag_name}"; then
+    out_name="old_cascade_versioning"
+    tag_scope="HEAD"
+    # This particular default is not really important, because user has to
+    # choose from a dropdown to send workflow_event to initiate the cascade.
+    # - So this tag value should always be set.
+    # But we'll use 'alpha' to match update-merged.yml.
+    default_value="alpha"
+    new_tag_value="${EAPP_CASCADE_VERSIONING}"
+    delete_if=${EAPP_DELETE_CASCADE_VERSIONING:-false}
+  fi
+}
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+TRACE_LITE_ENABLE=${TRACE_LITE_ENABLE:-true}
+TRACE_FULL_ENABLE=${TRACE_FULL_ENABLE:-false}
+
+trace_lite () {
+  ${TRACE_LITE_ENABLE} || return 0
+
+  >&2 echo "$@"
+}
+
+trace_full () {
+  ${TRACE_FULL_ENABLE} || return 0
+
+  >&2 echo "$@"
+}
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+main () {
+  set -e
+
+  wrangle_tags "$@"
+}
+
+if [ "$0" = "${BASH_SOURCE[0]}" ]; then
+  # Being executed, so execute.
+  main "$@"
+fi
+
+unset -f main
+

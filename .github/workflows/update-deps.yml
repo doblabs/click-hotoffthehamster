@@ -11,26 +11,48 @@ run-name: 👣 — Cascade — 2.) Update deps ${{
   github.event_name == 'workflow_dispatch' && '(via User)' || '' }}
 
 on:
-  # Via update-cascade.yml
+  # Via update-cascade.yml from upstream project
   repository_dispatch:
     types: [update-deps]
+    # Inputs are not defined, but are part of github.event.client_payload.
+    # This workflow looks for the following inputs:
+    #
+    #   inputs:
+    #     - cascade-updatedeps
+    #     - cascade-versioning
 
-  # Via GitHub Actions website button
+  # Via GitHub Actions website button, from user
   workflow_dispatch:
     inputs:
-      increment-version:
+      bump-part:
         description: 'Increment version'
+        type: choice
+        options:
+          - 'alpha'
+          - 'patch'
+          - 'least'
+          - 'skip'
+        default: 'alpha'
+
+      cascade-dispatch:
+        description: 'Start the cascade'
+        type: boolean
+        default: false
+
+      cascade-updatedeps:
+        description: 'Cascade poetry-update'
         type: boolean
         default: true
-      cascade-dispatch:
-        description: 'Start the cascade!'
-        type: boolean
-        default: false
-      prerelease:
-        description: 'Pre-release cascade'
-        type: boolean
-        default: false
-        required: false
+
+      cascade-versioning:
+        description: 'Cascade version bump'
+        type: choice
+        options:
+          - 'alpha'
+          - 'patch'
+          - 'least'
+          - 'skip'
+        default: 'alpha'
 
 # ***
 
@@ -40,8 +62,29 @@ env:
   PYTHON_VERSION: 3.11
 
 jobs:
+  # Here we check for branch tags (ci-inhibit-forever) and HEAD tags the
+  # user might've set deliberately on this project. Because this is the
+  # cascade entry point for a project, HEAD tags won't be automatically
+  # set unless user set them deliberately.
+  wrangle-ci-tags:
+    name: Wrangle (read) CI tags
+    uses: ./.github/workflows/ci-tags-wrangle.yml
+
   poetry-update:
     name: Update lock deps
+
+    needs: [wrangle-ci-tags]
+
+    # If called from upstream repo, it tells us to updatedeps or not.
+    # - If triggered via workflow_dispatch, updatedeps this repo unless
+    #   user proactively tagged us not to.
+    #   - And tell downstream repos to do whatever user chose them to do.
+    if: true
+      && needs.wrangle-ci-tags.outputs.old-inhibit-cascade == 'false'
+      && needs.wrangle-ci-tags.outputs.old-inhibit-forever == 'false'
+      && needs.wrangle-ci-tags.outputs.old-cascade-updatedeps == 'true'
+      && (github.event_name != 'repository_dispatch'
+          || github.event.client_payload.cascade-updatedeps == 'true')
 
     runs-on: ubuntu-latest
 
@@ -75,53 +118,64 @@ jobs:
       - name: Run bin/update-poetry
         id: run-update-poetry
         # Run poetry-update.
-        # DEVXX: Set UPDEPS_FAKE_UPDATE=true to fake poetry.lock update,
-        #          e.g., if you're testing inter-workflow flow.
         run: |
-          export UPDEPS_FAKE_UPDATE=false
-          export UPDEPS_REPO_ORG_PROJ="${{ github.repository }}"
-          export UPDEPS_LABEL_INHIBIT_VERSION="${{ ! inputs.increment-version }}"
-          export UPDEPS_LABEL_INHIBIT_CASCADE="${{ ! inputs.cascade-dispatch }}"
-          export UPDEPS_LABEL_PRERELEASE="${PRERELEASE}"
-
           env | grep -e "^UPDEPS_"
 
           new_pr_num="$(./.github/bin/update-poetry)"
 
           echo "new_pr_num=${new_pr_num}" >> $GITHUB_OUTPUT
         env:
-          # USER_TOKEN used to call gh-label (manage 'poetry.lock' label).
+          # USER_TOKEN used with gh-label (manage 'poetry.lock' label),
+          # and GBOT_TOKEN used to approve PR using different user:
           # - USER_TOKEN used on gh-pr-create and gh-pr-merge, and
           #   GBOT_TOKEN used on gh-pr-review.
           USER_TOKEN: ${{ secrets.USER_PAT }}
           GBOT_TOKEN: ${{ github.token }}
-          # Organization variables.
+          # Organization variables (user email/name used on git-commit).
           UPDEPS_USER_EMAIL: ${{ vars.UPDEPS_USER_EMAIL }}
           UPDEPS_USER_NAME: ${{ vars.UPDEPS_USER_NAME }}
           UPDEPS_USER_NAME_UPDEPS: ${{ vars.UPDEPS_USER_NAME_UPDEPS }}
-          # Input value.
-          PRERELEASE: ${{
-            github.event_name == 'workflow_dispatch' && inputs.prerelease
-            || github.event.client_payload.prerelease == 'true' }}
+          # Project identifier (used to deduce remote name for git-push).
+          UPDEPS_REPO_ORG_PROJ: ${{ github.repository }}
+          # Script inputs.
+          UPDEPS_LABEL_INHIBIT_CASCADE: ${{ ! inputs.cascade-dispatch }}
+          UPDEPS_LABEL_VERSIONING_PART: ${{
+            github.event_name == 'workflow_dispatch' && inputs.bump-part
+            || github.event.client_payload.cascade-versioning }}
+          # DEVXX: Mock poetry-update w/ UPDEPS_FAKE_UPDATE=true to test/dev faster.
+          UPDEPS_FAKE_UPDATE: false
 
     outputs:
       new_pr_num: ${{ steps.run-update-poetry.outputs.new_pr_num }}
 
   # ***
 
-  # If no PR, continue cascade; otherwise update-merged.yml workflow
-  # will continue cascade after PR is merged, and new package version
-  # is released.
+  # If no PR, move on to versioning here. And if versioning being skipped,
+  # versioning workflow will dispatch immediately to downstream repo(s).
+  # Otherwise, if PR created, update-merged.yml workflow will continue
+  # cascade after PR is merged, and new package version is released.
   update-cascade:
     name: "Cascade maybe"
 
-    uses: ./.github/workflows/update-cascade.yml
+    uses: ./.github/workflows/update-merged.yml
     secrets: inherit
 
-    needs: poetry-update
+    needs: [wrangle-ci-tags, poetry-update]
 
-    if: |
-      needs.poetry-update.result == 'success'
-        && needs.poetry-update.outputs.new_pr_num == ''
+    if: ${{ !cancelled()
+        && needs.wrangle-ci-tags.outputs.old-inhibit-cascade == 'false'
+        && needs.wrangle-ci-tags.outputs.old-inhibit-forever == 'false'
+        && (needs.poetry-update.result == 'skipped'
+            || (needs.poetry-update.result == 'success'
+                && needs.poetry-update.outputs.new_pr_num == ''))
         && (github.event_name != 'workflow_dispatch'
             || inputs.cascade-dispatch == 'true')
+      }}
+
+    with:
+      cascade-updatedeps: ${{
+        github.event_name == 'workflow_dispatch' && inputs.cascade-updatedeps
+        || github.event.client_payload.cascade-updatedeps == 'true' }}
+      cascade-versioning: ${{
+        github.event_name == 'workflow_dispatch' && inputs.cascade-versioning
+        || github.event.client_payload.cascade-versioning }}
