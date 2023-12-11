@@ -111,29 +111,85 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.repository.default_branch }}
-          # Fetch all history, so rev-parse HEAD is real HEAD.
+          # Grab everything, because we might need to switch branches
+          # in the next step.
           fetch-depth: 0
         if: github.event_name == 'workflow_dispatch'
 
+      # Check the default branch HEAD for a version tag.
+      # - If it's not found, try the pre-release branch.
+      # - T_M_I: Note there are 2 branches that might be version-tagged:
+      #     the main, default branch; and
+      #     the 'liminal' (pre-release) branch.
+      #   - Within the main branch, if any commit has a pre-release version,
+      #     that commit *also* has a normal version.
+      #   - In the other, 'liminal', branch, it's the other way around: any
+      #     commit might only have a pre-release version, or nothing, but any
+      #     commit in the 'liminal' branch with a normal version also has a
+      #     pre-release version.
       - name: Probe version tag (is workflow_dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          PRERELEASE_BRANCH: ${{ vars.PRERELEASE_BRANCH }}
         run: |
-          version_tags="$(
+          print_version_tags () {
             git tag --list --points-at HEAD \
-              | grep -E -e "${VERSPARTS}" \
-          )"
+              | grep -E -e "${VERSPARTS}"
+          }
 
-          if $(echo "${version_tags}" | wc -l) -gt 1; then
-            >&2 echo "ERROR: Multiple version tags already"
+          branch_name="$(git rev-parse --abbrev-ref=loose HEAD)"
+
+          version_tags="$(print_version_tags)"
+
+          if [ -z "${version_tags}" ] && [ -n "${PRERELEASE_BRANCH}" ]; then
+            # Try the pre-release branch.
+            git checkout ${PRERELEASE_BRANCH}
+
+            branch_name="${PRERELEASE_BRANCH}"
+
+            version_tags="$(print_version_tags)"
+          fi
+
+          if [ -z "${version_tags}" ]; then
+            >&2 echo "ERROR: Nothing to do: HEAD(s) not versioned"
 
             exit 1
           fi
 
-          VERSION_TAG="${version_tags}"
+          echo "Version tag(s) on “${branch_name}”: ${version_tags}"
+
+          # If multiple versions tagged, choose the largest.
+          # - Note this is quite unnecessary, as this use case (a user
+          #   deliberately initiating release-pypi from the GitHub Actions
+          #   website, or via `gh workflow run`, notwithstanding there
+          #   being multiple versions on the latest commit) is both rare
+          #   and not at all critical. The majority, if not all, PyPI
+          #   releases will be due to the 'release' event, not workflow-D.
+          # Note that `sort -V|--version-sort` sorts pre-release before
+          # their normal counterparts, so it's sorta useless, and we'll
+          # just grab the "largest" 2 versions and then do a simple pre-
+          # release vs. normal comparison, knowing that, if the user is
+          # playing by the rules, there will only be at most 2 versions
+          # tagged.
+          if $(echo "${version_tags}" | wc -l) -lt 2; then
+            VERSION_TAG="${version_tags}"
+          else
+            possible_versions="$(echo "${version_tags}" | sort -V -r | head -2)"
+            possible_largest="$(echo "${possible_versions}" | head -1)"
+            other_possibility="$(echo "${possible_versions}" | tail -1)"
+
+            if [[ "${possible_largest}" =~ "${other_possibility}"* ]]; then
+              # Means ${possible_largest} is a pre-release of ${other_possibility},
+              # e.g., [[ 1.2.4-alpha.1 =~ 1.2.4* ]]
+              possible_largest="${other_possibility}"
+            fi
+
+            VERSION_TAG="${possible_largest}"
+          fi
 
           echo "VERSION_TAG=${VERSION_TAG} [${version_tags}]"
 
           echo "VERSION_TAG=${VERSION_TAG}" >> "${GITHUB_ENV}"
-        if: github.event_name == 'workflow_dispatch'
 
       # MEH: We could support HEAD not being tagged (e.g., user wants to
       # tag and release previous commit) if we looked instead for highest
@@ -180,13 +236,12 @@ jobs:
           [ -z "${extra_index_arg}" ] \
             && pipx_pip_args="" \
             || pipx_pip_args="--pip-args=${extra_index_arg}"
-          #
+
           ! ${PRERELEASE} \
             && index_url_pip="" \
             || index_url_pip="--index-url ${test_pypi_url} ${extra_index_arg}"
           echo "INDEX_PIP=${index_url_pip}" >> "${GITHUB_ENV}"
-          #
-          # yamllint disable-line rule:line-length
+
           ! ${PRERELEASE} \
             && index_url_pipx="" \
             || index_url_pipx="--index-url ${test_pypi_url} ${pipx_pip_args}"
@@ -217,9 +272,11 @@ jobs:
       # On GHA: pipx: error: unrecognized arguments: easy-as-pypi==1.1.1a20
       - name: Check if previously released
         run: |
-          echo "pipx install ${INDEX_PIPX} ${PACKAGE_NAME}==${VERSION}"
-          ! pipx install ${INDEX_PIPX} ${PACKAGE_NAME}==${VERSION} \
-            || echo "IS_RELEASED=true" >> "${GITHUB_ENV}"
+          IS_RELEASED=false
+          echo "pip install ${INDEX_PIP} ${PACKAGE_NAME}==${VERSION}"
+          pip install ${INDEX_PIP} ${PACKAGE_NAME}==${VERSION} \
+            && IS_RELEASED=true
+          echo "IS_RELEASED=${IS_RELEASED}" >> "${GITHUB_ENV}"
         shell: bash
 
       # Determine if previously released (and skip re-releasing if so).
@@ -247,15 +304,15 @@ jobs:
       #         gh release download ${VERSION_TAG} -D dist/
       #       env:
       #         GH_TOKEN: ${{ github.token }}
-      #       if: env.IS_RELEASED == ''
+      #       if: env.IS_RELEASED == 'false'
       #
       #     - name: Install poetry
       #       run: pipx install poetry
-      #       if: env.IS_RELEASED == ''
+      #       if: env.IS_RELEASED == 'false'
       #
       #     - name: Install poetry-dynamic-versioning
       #       run: poetry self add "poetry-dynamic-versioning[plugin]"
-      #       if: env.IS_RELEASED == ''
+      #       if: env.IS_RELEASED == 'false'
       #
       #     # CXREF: https://python-poetry.org/docs/repositories/
       #     - name: Poetry publish package
@@ -277,7 +334,7 @@ jobs:
       #         echo
       #         echo "poetry publish ${repository}"
       #         poetry publish ${repository}
-      #       if: env.IS_RELEASED == ''
+      #       if: env.IS_RELEASED == 'false'
 
       - name: Store variables for next job
         id: set_outputs
@@ -290,6 +347,9 @@ jobs:
           echo "VERSION=${VERSION}" >> "${GITHUB_OUTPUT}"
           echo "VERSION_TAG=${VERSION_TAG}" >> "${GITHUB_OUTPUT}"
 
+          echo "GITHUB_OUTPUT:"
+          cat "${GITHUB_OUTPUT}" | sed 's/^/  /'
+
     outputs:
       INDEX_PIP: ${{ steps.set_outputs.outputs.INDEX_PIP }}
       INDEX_PIPX: ${{ steps.set_outputs.outputs.INDEX_PIPX }}
@@ -301,20 +361,34 @@ jobs:
 
   # ***
 
+  wrangle-ci-tags:
+    name: Wrangle (read) CI tags
+    uses: ./.github/workflows/ci-tags-wrangle.yml
+    needs: [prepare-publish]
+    if: ${{ ! cancelled()
+      && needs.prepare-publish.result == 'success'
+      && needs.prepare-publish.outputs.IS_RELEASED == 'false' }}
+    with:
+      prerelease: ${{ needs.prepare-publish.outputs.PRERELEASE == 'true' }}
+
+  # ***
+
   poetry-publish:
 
     runs-on: ubuntu-latest
 
-    needs: prepare-publish
+    needs: [prepare-publish, wrangle-ci-tags]
 
     # Easiest approach would be to skip if IS_RELEASED, e.g.,
-    #   if: needs.prepare-publish.outputs.IS_RELEASED == '' && ...
+    #   if: needs.prepare-publish.outputs.IS_RELEASED == 'false' && ...
     # but if this job is skipped, so is smoke-test, which 'needs'
     # this job. So we'll skip the individual steps, and not the job.
     # - Unfortunately, pypa/gh-action-pypi-publish@release/v1 still builds
     #   its image, even when its step(s) skipped, which takes a few moments.
-    if: needs.prepare-publish.result == 'success'
-      && needs.prepare-publish.outputs.IS_RELEASED == ''
+    if: ${{ ! cancelled()
+      && needs.prepare-publish.result == 'success'
+      && needs.prepare-publish.outputs.IS_RELEASED == 'false'
+      && needs.wrangle-ci-tags.outputs.old-inhibit-release-pypi == 'false' }}
 
     # CXREF: PyPI recommends using an environment ('release')
     #        to keep non-admin organization members from publishing.
@@ -348,6 +422,8 @@ jobs:
     steps:
       - name: Checkout repository (for gh)
         uses: actions/checkout@v4
+        # Skip: No need to checkout ${{ vars.PRERELEASE_BRANCH }}
+        #       if pre-release; we just need repo for `gh` command.
 
       # Note that `gh status` does not work here, prints error:
       #   could not load notifications: could not get notifications:
@@ -376,17 +452,40 @@ jobs:
       - name: Inspect dist/
         run: echo && echo dist/ && ls -la dist/
 
-      # https://github.com/marketplace/actions/pypi-publish
-      # https://docs.pypi.org/trusted-publishers/using-a-publisher/
-      # https://github.com/pypa/gh-action-pypi-publish
+      # ***
+
+      # REFER:
+      #   https://github.com/marketplace/actions/pypi-publish
+      #   https://docs.pypi.org/trusted-publishers/using-a-publisher/
+      #   https://github.com/pypa/gh-action-pypi-publish
+
       - name: Publish package distributions to test.PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
+        # Only publish pre-release packages to test.PyPI.
+        #
+        # - It's not prudent to publish normal packages to test.PyPI,
+        #   because the normal package was made from a normal build,
+        #   and the normal build only includes normal sources.
+        #   - That is, the `poetry build` was run on the main branch,
+        #     and its pyproject.toml uses deps from normal PyPI.
+        #     - And if we post such a project to test.PyPI, whose deps
+        #       might ref older versions than the current alpha deps,
+        #       I'd assume there'd be chayos. Maybe package versions
+        #       downgrading, or Poetry failing because deps conflicts,
+        #       I guess I'm not sure, but it smells like danger.
+        #   - And note that pip uses the first package index it finds
+        #     that has the source. I.e., pip *does not* search multiple
+        #     indices and pick the largest-version source.
+        # - So for either type or release cascade, whether 'alpha'
+        #   or 'patch', we always publish to the same package index.
         if: env.PRERELEASE == 'true'
 
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        # Unlike test.PyPI, only publish normal releases to PyPI proper,
+        # never alphas.
         if: env.PRERELEASE == 'false'
 
   # ***
@@ -398,7 +497,7 @@ jobs:
 
     needs: [prepare-publish, poetry-publish]
 
-    # Note the 'if' is skipped if any needs were skipped, unless always.
+    # Note 'if' skipped if any needs skipped, unless always() or cancelled().
     if: ${{ ! cancelled()
       && needs.prepare-publish.result == 'success'
       && (needs.poetry-publish.result == 'success'
@@ -415,7 +514,7 @@ jobs:
       - name: Sleep for 13 seconds
         run: sleep 13s
         shell: bash
-        if: needs.prepare-publish.outputs.IS_RELEASED == ''
+        if: needs.prepare-publish.outputs.IS_RELEASED == 'false'
 
   # ***
 
@@ -439,6 +538,10 @@ jobs:
   #       same workflow. (I tried `pip cache remove ${PACKAGE_NAME}`,
   #       which removes nothing, because no wheels files downloaded,
   #       not surprising, but worth a shot.)
+  #
+  #     - REFER: This feels similar to `poetry cache clear PyPI --all`,
+  #       when `poetry update` doesn't see a new release, but Poetry
+  #       is not involved here.
 
   # - DUNNO/2023-10-08: I ran this workflow manually, and pipx-install
   #   installed the version. But then in the new workflow, pipx-install
@@ -452,20 +555,18 @@ jobs:
 
     needs: [prepare-publish, poetry-publish, sleep-before-smoking]
 
-    # Run if all needs 'success' or 'skipped'.
     if: ${{ ! cancelled()
       && !contains(needs.*.result, 'failure')
-      && !contains(needs.*.result, 'cancelled') }}
+      && (needs.poetry-publish.result == 'success'
+          || (needs.poetry-publish.result == 'skipped'
+              && needs.prepare-publish.outputs.IS_RELEASED == 'true'
+             )) }}
 
     steps:
-      - name: Dump github object
-        run: echo "${GITHUB_OBJ}"
-        shell: bash
-        env:
-          GITHUB_OBJ: ${{ toJson(github) }}
-
-      - name: Checkout repository (not workflow_dispatch)
+      - name: Checkout repository
         uses: actions/checkout@v4
+        # Skip: No need to checkout ${{ vars.PRERELEASE_BRANCH }}
+        #       if pre-release; we just need repo for `gh` command.
 
       # # REFER: https://cli.github.com/manual/gh_workflow_run
       # - name: Re-run this workflow...
@@ -487,7 +588,8 @@ jobs:
             -f "INDEX_PIP=${INDEX_PIP}" \
             -f "INDEX_PIPX=${INDEX_PIPX}" \
             -f "PACKAGE_NAME=${PACKAGE_NAME}" \
-            -f "VERSION=${VERSION}"
+            -f "VERSION=${VERSION}" \
+            -f "PRERELEASE=${PRERELEASE}"
           #
           # echo "... | gh workflow run release-smoke-test.yml --json"
           # # Doesn't like double-quotes outside, singles inside:
@@ -512,5 +614,6 @@ jobs:
           INDEX_PIPX: ${{ needs.prepare-publish.outputs.INDEX_PIPX }}
           PACKAGE_NAME: ${{ needs.prepare-publish.outputs.PACKAGE_NAME }}
           VERSION: ${{ needs.prepare-publish.outputs.VERSION }}
+          PRERELEASE: ${{ needs.prepare-publish.outputs.PRERELEASE }}
 
 # ***

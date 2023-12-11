@@ -59,6 +59,15 @@ PYPROJECT_DOC8_DIR ?= .pyproject-doc8
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
+# Use a special pyproject.toml to install our deps from test.PyPI
+# and to include prereleases, so user can end-to-end test alphas.
+
+PYPROJECT_PRERELEASE_DIR ?= .pyproject-prerelease
+
+VENV_NAME_PRERELEASE ?= .venv-alpha
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
 # `make docs` docs/ subdir HTML target, e.g.,
 #   ./docs/_build/html/index.html
 DOCS_BUILDDIR ?= _build
@@ -314,8 +323,9 @@ clean-test:
 
 build: _depends_active_venv clean-build
 	poetry build
-	ls -l dist
-	@echo 'HINT: Run `make dist-list` to bdist and sdist contents.'
+	@echo "ls dist/"
+	@command ls -lGAF "dist/" | tail +2 | sed 's/^/  /'
+	@echo 'HINT: Run `make dist-list` to show bdist and sdist contents.'
 .PHONY: build
 
 dist: build
@@ -450,41 +460,8 @@ release: publish
 #  .ONESHELL:
 
 install: _warn_unless_virtualenvwrapper
-	eval "$$($$(which pyenv) init -)"; \
-	pyenv shell --unset; \
-	\
-	project_dir="$$(pwd)"; \
-	workon_home="$${WORKON_HOME:-$${HOME}/.virtualenvs}"; \
-	mkdir -p "$${workon_home}"; \
-	cd "$${workon_home}"; \
-	if [ ! -d "$(PACKAGE_NAME)" ]; then \
-		python3 -m venv $(VENV_ARGS) "$(PACKAGE_NAME)"; \
-		echo "$${project_dir}" > "$(PACKAGE_NAME)/.project"; \
-	fi; \
-	. "$(PACKAGE_NAME)/bin/activate"; \
-	cd "$${project_dir}"; \
-	\
-	echo; \
-	echo "pip install -U pip setuptools"; \
-	pip install -U pip setuptools; \
-	\
-	echo; \
-	echo "pip install poetry"; \
-	pip install poetry; \
-	\
-	echo; \
-	echo "poetry self add 'poetry-dynamic-versioning[plugin]'"; \
-	poetry self add "poetry-dynamic-versioning[plugin]"; \
-	\
-	echo; \
-	echo "poetry install"; \
-	poetry install; \
-	\
-	echo; \
-	echo "Ready to rock:"; \
-	echo "  . $${workon_home}/$(PACKAGE_NAME)/bin/activate"; \
-	echo "Or if using virtualenvwrapper:"; \
-	echo "  workon $(PACKAGE_NAME)";
+	@. "$(MAKETASKS_SH)" && \
+		install_release "$(PACKAGE_NAME)" "$(VENV_ARGS)"
 .PHONY: install
 
 # Aka uninstall, sorta.
@@ -504,6 +481,53 @@ _warn_unless_virtualenvwrapper:
 		echo; \
 	fi;
 .PHONY: _warn_unless_virtualenvwrapper
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+install-prerelease: _depends_active_venv_unless_ci
+	@. "$(MAKETASKS_SH)" && \
+		install_prerelease \
+			"$(VENV_NAME_PRERELEASE)" \
+			"$(VENV_ARGS)" \
+			"$(VENV_NAME)" \
+			"$(PYPROJECT_PRERELEASE_DIR)" \
+			"$(EDITABLE_PJS)" \
+			"$(SOURCE_DIR)"
+.PHONY: install-prerelease
+
+prepare-poetry-prerelease: _depends_active_venv_unless_ci
+	@. "$(MAKETASKS_SH)" && \
+		prepare_poetry_prerelease \
+			"$(PYPROJECT_PRERELEASE_DIR)" \
+			"$(EDITABLE_PJS)" \
+			"$(SOURCE_DIR)"
+.PHONY: prepare-poetry-prerelease
+
+build-prerelease: _depends_active_venv clean-build
+	@if [ ! -f "$(PYPROJECT_PRERELEASE_DIR)/poetry.lock" ] \
+		|| [ ! -f "$(PYPROJECT_PRERELEASE_DIR)/pyproject.toml" ] \
+	; then \
+		>&2 echo "ERROR: Please run \`make prepare-poetry-prerelease\`"; \
+		\
+		exit 1; \
+	fi
+	@command cp -f "$(PYPROJECT_PRERELEASE_DIR)/poetry.lock" "poetry.lock"
+	@command cp -f "$(PYPROJECT_PRERELEASE_DIR)/pyproject.toml" "pyproject.toml"
+	@echo "poetry build"
+	@success=false; \
+	if poetry build; then \
+		success=true; \
+		touch "dist/.pre-release-build"; \
+		echo "ls dist/"; \
+		command ls -lGAF "dist/" | tail +2 | sed 's/^/  /'; \
+		echo 'HINT: Run `make dist-list` to show bdist and sdist contents.'; \
+	fi; \
+	git checkout -- "poetry.lock"; \
+	git checkout -- "pyproject.toml"; \
+	if ! $${success}; then \
+		exit 1; \
+	fi
+PHONY: build-prerelease
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
@@ -534,11 +558,19 @@ pyenv-install-pys:
 
 _depends_active_venv:
 	@if [ -z "${VIRTUAL_ENV}" ]; then \
-		>&2 echo "ERROR: Run from a virtualenv!"; \
+		>&2 echo; \
+		>&2 echo "ERROR: 💣 Run from a virtualenv!"; \
+		>&2 echo; \
 		\
 		exit 1; \
 	fi
 .PHONY: _depends_active_venv
+
+_depends_active_venv_unless_ci:
+	@if ! $${CI:-false}; then \
+		make _depends_active_venv; \
+	fi;
+.PHONY: _depends_active_venv_unless_ci
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
@@ -554,7 +586,12 @@ ifndef EAPP_MAKEFILE_DEVELOP_DEFINED
 
 develop: editables editable
 	@. "$(MAKETASKS_SH)" && \
-		make_develop "$(VENV_NAME)" "$(VENV_PYVER)" "$(VENV_ARGS)" "$(EDITABLE_DIR)"
+		make_develop \
+			"$(VENV_NAME)" \
+			"$(VENV_PYVER)" \
+			"$(VENV_ARGS)" \
+			"$(EDITABLE_DIR)" \
+			"$(EDITABLE_PJS)"
 	@echo
 	@echo "$(VENV_NAME) is ready — if \`workon\` is installed, run that"
 .PHONY: develop
