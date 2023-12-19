@@ -1,6 +1,41 @@
 \$ click\_
 ==========
 
+.. CXREF:
+   https://docs.github.com/en/actions/monitoring-and-troubleshooting-workflows/adding-a-workflow-status-badge
+
+.. image:: https://github.com/doblabs/click-hotoffthehamster/actions/workflows/checks-unspecial.yml/badge.svg?branch=release
+  :target: https://github.com/doblabs/click-hotoffthehamster/actions/workflows/checks-unspecial.yml/badge.svg?branch=release
+  :alt: Build Status
+
+.. CXREF: https://app.codecov.io/github.com/doblabs/click-hotoffthehamster/settings/badge
+
+.. image:: https://codecov.io/gh/doblabs/click-hotoffthehamster/branch/release/graph/badge.svg?token=by86aPAzDz
+  :target: https://app.codecov.io/gh/doblabs/click-hotoffthehamster
+  :alt: Coverage Status
+
+.. image:: https://readthedocs.org/projects/click-hotoffthehamster/badge/?version=latest
+  :target: https://click-hotoffthehamster.readthedocs.io/en/latest/
+  :alt: Documentation Status
+
+.. image:: https://img.shields.io/github/v/release/doblabs/click-hotoffthehamster.svg?style=flat
+  :target: https://github.com/doblabs/click-hotoffthehamster/releases
+  :alt: GitHub Release Status
+
+.. image:: https://img.shields.io/pypi/v/click-hotoffthehamster.svg
+  :target: https://pypi.org/project/click-hotoffthehamster/
+  :alt: PyPI Release Status
+
+.. image:: https://img.shields.io/pypi/pyversions/click-hotoffthehamster.svg
+  :target: https://pypi.org/project/click-hotoffthehamster/
+  :alt: PyPI Supported Python Versions
+
+.. image:: https://img.shields.io/github/license/doblabs/click-hotoffthehamster.svg?style=flat
+  :target: https://github.com/doblabs/click-hotoffthehamster/blob/release/LICENSE
+  :alt: License Status
+
+|
+
 Click is a Python package for creating beautiful command line interfaces
 in a composable way with as little code as necessary. It's the "Command
 Line Interface Creation Kit". It's highly configurable but comes with
