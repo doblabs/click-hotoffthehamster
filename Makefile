@@ -205,11 +205,41 @@ MAKEFILE_PROJECT ?= Makefile.project
 
 EAPP_MAKEFILE_DEVELOP_DEFINED ?=
 
-EAPP_MAKEFILE_PYDOCSTYLE_DISABLE ?=
+# CI '.github/workflows/checks.yml' opt-outs
+#
+# - USAGE: Add these to Makefile.project, and set true.
 
-EAPP_MAKEFILE_LINKCHECK_DISABLE ?=
+EAPP_MAKEFILE_TESTS_DISABLE ?=
+
+EAPP_MAKEFILE_TESTS_WINDOWS_DISABLE ?=
+
+EAPP_MAKEFILE_BLACK_DISABLE ?=
+
+EAPP_MAKEFILE_FLAKE8_DISABLE ?=
+
+EAPP_MAKEFILE_ISORT_DISABLE ?=
+
+EAPP_MAKEFILE_DOC8_PIP_DISABLE ?=
+
+EAPP_MAKEFILE_DOC8_POETRY_DISABLE ?=
 
 EAPP_MAKEFILE_DOCS_DISABLE ?=
+
+# Not disableable:
+#   EAPP_MAKEFILE_TWINE_CHECK_DISABLE
+
+# Not disableable:
+#   EAPP_MAKEFILE_POETRY_CHECK_DISABLE
+
+EAPP_MAKEFILE_PYDOCSTYLE_DISABLE ?=
+
+EAPP_MAKEFILE_COVERAGE_DISABLE ?=
+
+# Not disableable:
+#   EAPP_MAKEFILE_YAMLLINT_DISABLE ?=
+
+# Local-only (CI never linkcheck's).
+EAPP_MAKEFILE_LINKCHECK_DISABLE ?=
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
@@ -629,6 +659,7 @@ EDITABLE_PJS = \
 	human-friendly_pedantic-timedelta \
 	pep440-version-compare-cli \
 	sqlalchemy-migrate-hotoffthehamster \
+	tempita-hotoffthehamster \
 	\
 	dob-bright \
 	dob-prompt \
@@ -853,8 +884,14 @@ black: _depends_active_venv
 #     cgetfile /path/to/project/.flake8.out
 #   Which is automated by the gvim_load_quickfix shell-out.
 
+ifndef EAPP_MAKEFILE_FLAKE8_DISABLE
 flake8: _depends_active_venv _run_flake8 _gvim_load_quickfix_flake8
 .PHONY: flake8
+else
+flake8:
+	@printf ""
+.PHONY: flake8
+endif
 
 _run_flake8: SHELL:=/bin/bash
 _run_flake8: _depends_active_venv
@@ -1005,11 +1042,12 @@ endif
 
 # SAVVY: Consider other useful options we don't expose via this Makefile, e.g.,:
 #
-#     pytest --pdb -vv -k test_function tests/
+#     pytest --pdb -s -vv -k test_function tests/
 #
-#                                       ^^^^^^ Test specific path or file
-#                      ^^ ^^^^^^^^^^^^^ Test specific function or class
-#                  ^^^ Increase verbosity
+#                                          ^^^^^^ Test specific path or file
+#                         ^^ ^^^^^^^^^^^^^ Test specific function or class
+#                     ^^^ Increase verbosity
+#                  ^^ In conjunction with --pdb, so it can haz input (aka --capture=no)
 #            ^^^^^ Start pdb on error or KeyboardInterrupt
 
 # SAVVY: By default, pipeline returns exit value from final command, e.g.,
@@ -1085,8 +1123,18 @@ coverage: _coverage_sqlite _coverage_report
 .PHONY: coverage
 
 # Create '.coverage' file.
+# - SAVVY: Use `--source=src` to restrict post-test analysis,
+#   and not `--omit`, to ignore /tmp paths:
+#   - Added for sqlalchemy-migrate-hotoffthehamster, i.e.,:
+#
+#       $ make coverage
+#       ... [tests run]
+#       ============ 175 passed, 141 warnings in 40.95s ============
+#       coverage report
+#       No source for code: '/tmp/tmp14c2e6wv/test_load_model.py'.
+#       Makefile:1131: recipe for target '_coverage_report' failed
 _coverage_sqlite: _depends_active_venv
-	coverage run -m pytest $(TEST_ARGS) tests
+	coverage run --source=src $(TEST_ARGS) -m pytest tests
 .PHONY: _coverage_sqlite
 
 _coverage_report: _depends_active_venv
