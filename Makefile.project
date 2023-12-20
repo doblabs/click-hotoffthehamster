@@ -3,5 +3,35 @@
 # Project: https://github.com/doblabs/click-hotoffthehamster#🪝
 # License: BSD-3-Clause
 
-MAKE_LINT_SKIP_PYDOCSTYLE ?= true
+# ***
+
+# Override EAPP's Makefile to inject our own poetry-install-with's.
+
+PO_INSTALL_WITH_EAPP = dist,i18n,lint,test,docstyle,docs,extras
+
+# OMITD: project_dist
+PO_INSTALL_WITH_PROJ = project_docs,project_test,project_typing,project_dev
+
+develop: editables editable
+	@. "$(MAKETASKS_SH)" && \
+		\
+    PO_INSTALL_WITH="--with $(PO_INSTALL_WITH_EAPP),$(PO_INSTALL_WITH_PROJ)" \
+		\
+		make_develop "$(VENV_NAME)" "$(VENV_PYVER)" "$(VENV_ARGS)" "$(EDITABLE_DIR)"
+	@echo
+	@echo "$(VENV_NAME) is ready — if \`workon\` is installed, run that"
+.PHONY: develop
+
+# AFAIK Makefile uses double-colon (`recipe:: `) to chain recipes for the
+# same targets, but overriding recipes is discouraged (by the community,
+# by 2 scolding warning message, and because in practice I've seen it
+# not work as expected), and there's no way for Makefile to test if a
+# recipe is already defined before defining one. So we need to be
+# explicit that we defined the 'develop' recipe.
+
+EAPP_MAKEFILE_DEVELOP_DEFINED = true
+
+# ***
+
+EAPP_MAKEFILE_PYDOCSTYLE_DISABLE ?= true
 
